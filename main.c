@@ -335,10 +335,10 @@ void verificar_init(bool teste, char *descricao)
 	exit(1);
 }
 
-ALLEGRO_BITMAP *selecionar_sprite(struct Sprites *sprites, int x, int y, int largura, int altura)
+ALLEGRO_BITMAP *recortar_sprite(struct Sprites *sprites, int x, int y, int largura, int altura)
 {
 	ALLEGRO_BITMAP *sprite = al_create_sub_bitmap(sprites->sheet, x, y, largura, altura);
-	verificar_init(sprite, "selecionar_sprite");
+	verificar_init(sprite, "recortar_sprite");
 	return sprite;
 }
 
@@ -356,31 +356,31 @@ void carregar_sprites(struct Sprites *sprites)
 	sprites->sheet = al_load_bitmap("assets/sprites/spritesheet.bmp");
 	verificar_init(sprites->sheet, "spritesheet.bmp");
 
-	sprites->moldura = selecionar_sprite(sprites, 168, 0, DADO_L, DADO_H);
-	sprites->slot = selecionar_sprite(sprites, 168, 25, SLOT_L, SLOT_H);
+	sprites->moldura = recortar_sprite(sprites, 168, 0, DADO_L, DADO_H);
+	sprites->slot = recortar_sprite(sprites, 168, 25, SLOT_L, SLOT_H);
 
-	sprites->botao_rotacionar_padrao = selecionar_sprite(sprites, 168, 78, BOTAO_ROTACIONAR_L, BOTAO_ROTACIONAR_H);
-	sprites->botao_rotacionar_desabilitado = selecionar_sprite(sprites, 182, 78, BOTAO_ROTACIONAR_L, BOTAO_ROTACIONAR_H);
-	sprites->botao_rotacionar_ativo_padrao = selecionar_sprite(sprites, 196, 78, BOTAO_ROTACIONAR_L, BOTAO_ROTACIONAR_H);
-	sprites->botao_rotacionar_ativo_pressionado = selecionar_sprite(sprites, 210, 78, BOTAO_ROTACIONAR_L, BOTAO_ROTACIONAR_H);
+	sprites->botao_rotacionar_padrao = recortar_sprite(sprites, 168, 78, BOTAO_ROTACIONAR_L, BOTAO_ROTACIONAR_H);
+	sprites->botao_rotacionar_desabilitado = recortar_sprite(sprites, 182, 78, BOTAO_ROTACIONAR_L, BOTAO_ROTACIONAR_H);
+	sprites->botao_rotacionar_ativo_padrao = recortar_sprite(sprites, 196, 78, BOTAO_ROTACIONAR_L, BOTAO_ROTACIONAR_H);
+	sprites->botao_rotacionar_ativo_pressionado = recortar_sprite(sprites, 210, 78, BOTAO_ROTACIONAR_L, BOTAO_ROTACIONAR_H);
 
-	sprites->habilidade_desfazer_padrao = selecionar_sprite(sprites, 168, 93, BOTAO_HABILIDADE_L, BOTAO_HABILIDADE_H);
-	sprites->habilidade_desfazer_pressionado = selecionar_sprite(sprites, 184, 93, BOTAO_HABILIDADE_L, BOTAO_HABILIDADE_H);
-	sprites->habilidade_desfazer_desabilitado = selecionar_sprite(sprites, 200, 93, BOTAO_HABILIDADE_L, BOTAO_HABILIDADE_H);
+	sprites->habilidade_desfazer_padrao = recortar_sprite(sprites, 168, 93, BOTAO_HABILIDADE_L, BOTAO_HABILIDADE_H);
+	sprites->habilidade_desfazer_pressionado = recortar_sprite(sprites, 184, 93, BOTAO_HABILIDADE_L, BOTAO_HABILIDADE_H);
+	sprites->habilidade_desfazer_desabilitado = recortar_sprite(sprites, 200, 93, BOTAO_HABILIDADE_L, BOTAO_HABILIDADE_H);
 
-	sprites->habilidade_bomba_padrao = selecionar_sprite(sprites, 168, 110, BOTAO_HABILIDADE_L, BOTAO_HABILIDADE_H);
-	sprites->habilidade_bomba_pressionado = selecionar_sprite(sprites, 184, 110, BOTAO_HABILIDADE_L, BOTAO_HABILIDADE_H);
-	sprites->habilidade_bomba_desabilitado = selecionar_sprite(sprites, 200, 110, BOTAO_HABILIDADE_L, BOTAO_HABILIDADE_H);
+	sprites->habilidade_bomba_padrao = recortar_sprite(sprites, 168, 110, BOTAO_HABILIDADE_L, BOTAO_HABILIDADE_H);
+	sprites->habilidade_bomba_pressionado = recortar_sprite(sprites, 184, 110, BOTAO_HABILIDADE_L, BOTAO_HABILIDADE_H);
+	sprites->habilidade_bomba_desabilitado = recortar_sprite(sprites, 200, 110, BOTAO_HABILIDADE_L, BOTAO_HABILIDADE_H);
 
-	sprites->habilidade_rotacao_padrao = selecionar_sprite(sprites, 216, 93, BOTAO_HABILIDADE_L, BOTAO_HABILIDADE_H);
+	sprites->habilidade_rotacao_padrao = recortar_sprite(sprites, 216, 93, BOTAO_HABILIDADE_L, BOTAO_HABILIDADE_H);
 
-	sprites->fundo_progresso = selecionar_sprite(sprites, 168, 127, FUNDO_PROGRESSO_L, FUNDO_PROGRESSO_H);
+	sprites->fundo_progresso = recortar_sprite(sprites, 168, 127, FUNDO_PROGRESSO_L, FUNDO_PROGRESSO_H);
 
 	for (int i = 0; i < CORES_NUM; i++)
 	{
 		for (int j = 0; j < DADOS_NUM; j++)
 		{
-			sprites->dados[i][j] = selecionar_sprite(sprites, j * DADO_L, i * DADO_H, DADO_L, DADO_H);
+			sprites->dados[i][j] = recortar_sprite(sprites, j * DADO_L, i * DADO_H, DADO_L, DADO_H);
 		}
 	}
 
@@ -389,7 +389,7 @@ void carregar_sprites(struct Sprites *sprites)
 		int x = 192 + i * BALAO_HORIZONTAL_L;
 		int y = 0;
 
-		sprites->baloes_horizontais[i] = selecionar_sprite(sprites, x, y, BALAO_HORIZONTAL_L, BALAO_HORIZONTAL_H);
+		sprites->baloes_horizontais[i] = recortar_sprite(sprites, x, y, BALAO_HORIZONTAL_L, BALAO_HORIZONTAL_H);
 	}
 
 	for (int j = 0; j < BALOES_NUM; j++)
@@ -397,13 +397,13 @@ void carregar_sprites(struct Sprites *sprites)
 		int x = 192 + j * BALAO_VERTICAL_L;
 		int y = 11;
 
-		sprites->baloes_verticais[j] = selecionar_sprite(sprites, x, y, BALAO_VERTICAL_L, BALAO_VERTICAL_H);
+		sprites->baloes_verticais[j] = recortar_sprite(sprites, x, y, BALAO_VERTICAL_L, BALAO_VERTICAL_H);
 	}
 
 	for (int i = 0; i < COLAPSO_FRAMES_NUM; i++)
 	{
-		sprites->colapso_linha[i] = selecionar_sprite(sprites, i * DADO_L, 150, DADO_L, DADO_H);;
-		sprites->colapso_coluna[i] = selecionar_sprite(sprites, i * DADO_L, 175, DADO_L, DADO_H);;
+		sprites->colapso_linha[i] = recortar_sprite(sprites, i * DADO_L, 150, DADO_L, DADO_H);;
+		sprites->colapso_coluna[i] = recortar_sprite(sprites, i * DADO_L, 175, DADO_L, DADO_H);;
 	}
 }
 
