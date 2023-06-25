@@ -28,6 +28,24 @@
 
 #define SOMA_TAM (2 * QUADRO_TAM)
 
+#define MARGEM_PEQUENA 8
+#define MARGEM_MEDIA 16
+#define MARGEM_GRANDE 24
+
+#define INICIO_BOTOES_ESPACO 2
+
+#define PAUSA_TITULO_ESPACO 12
+#define PAUSA_BOTOES_ESPACO 1
+
+#define HABILIDADE_PROGRESSO_ESPACO 2
+#define HABILIDADE_QUANTIDADE_ESPACO 4
+
+#define HABILIDADES_ESPACO 4
+
+#define DADOS_ESPACO 1
+#define BALAO_ESPACO 1
+#define SLOTS_ESPACO 1
+
 #define LARGURA_ORIGINAL 320
 #define ALTURA_ORIGINAL 180
 
@@ -49,8 +67,22 @@
 #define PLACAR_TITULO_L 80
 #define PLACAR_TITULO_H 14
 
-#define BOTAO_HABILIDADE_L 16
-#define BOTAO_HABILIDADE_H 17
+#define PAUSA_TITULO_L 80
+#define PAUSA_TITULO_H 20
+
+#define PAUSA_BOTAO_MENU_L 73
+#define PAUSA_BOTAO_MENU_H 14
+
+#define PAUSA_H (PAUSA_TITULO_H + PAUSA_TITULO_ESPACO + 4 * PAUSA_BOTAO_MENU_H + 3 * PAUSA_BOTOES_ESPACO)
+
+#define GAME_OVER_TITULO_L 138
+#define GAME_OVER_TITULO_H 20
+
+#define GAME_OVER_BOTAO_L 85
+#define GAME_OVER_BOTAO_H 14
+
+#define HABILIDADE_BOTAO_L 16
+#define HABILIDADE_BOTAO_H 17
 
 #define FUNDO_PROGRESSO_L 3
 #define FUNDO_PROGRESSO_H 17
@@ -73,20 +105,8 @@
 #define BALAO_VERTICAL_L 17
 #define BALAO_VERTICAL_H 14
 
-#define MARGEM_PEQUENA 8
-#define MARGEM_MEDIA 16
-#define MARGEM_GRANDE 24
-
-#define INICIO_BOTOES_ESPACO 2
-
-#define HABILIDADE_PROGRESSO_ESPACO 2
-#define HABILIDADE_QUANTIDADE_ESPACO 4
-
-#define HABILIDADES_ESPACO 4
-
-#define DADOS_ESPACO 1
-#define BALAO_ESPACO 1
-#define SLOTS_ESPACO 1
+#define BOTAO_PAUSAR_L 16
+#define BOTAO_PAUSAR_H 16
 
 #define BOTAO_VOLTAR_OFFSET_CIMA 14
 
@@ -106,6 +126,7 @@
 #define BALAO_VERTICAL_OFFSET_CIMA 1
 
 #define BOTAO_ROTACIONAR_OFFSET_DIREITA 8
+#define BOTAO_PAUSAR_OFFSET_CIMA (MARGEM_PEQUENA + 30)
 
 #define ESCORE_OFFSET_CIMA 3
 #define TEMPO_OFFSET_CIMA 26
@@ -118,6 +139,10 @@
 #define CENA_PLACAR 1
 #define CENA_AJUDA 2
 #define CENA_JOGO 3
+
+#define ESTADO_RODANDO 0
+#define ESTADO_PAUSADO 1
+#define ESTADO_GAME_OVER 2
 
 #define DIRECAO_LINHA 0
 #define DIRECAO_COLUNA 1
@@ -140,11 +165,11 @@
 #define COR_PRETO al_map_rgb(0, 0, 0)
 #define COR_BRANCO al_map_rgb(255, 255, 255)
 #define COR_PROGRESSO al_map_rgb(121, 240, 8)
+#define COR_SOBREPOSICAO al_map_rgba(0, 0, 0, 210)
 
 #define DADO_VAZIO -1
 
 #define PERIODO_TICK (1.0 / 60.0)
-
 
 struct Fontes {
 	ALLEGRO_FONT *fipps_12;
@@ -173,8 +198,33 @@ struct Sprites {
 
 	ALLEGRO_BITMAP *placar_titulo;
 
+	ALLEGRO_BITMAP *pausa_titulo;
+
+	ALLEGRO_BITMAP *pausa_botao_resumir_padrao;
+	ALLEGRO_BITMAP *pausa_botao_resumir_sobre;
+
+	ALLEGRO_BITMAP *pausa_botao_reiniciar_padrao;
+	ALLEGRO_BITMAP *pausa_botao_reiniciar_sobre;
+
+	ALLEGRO_BITMAP *pausa_botao_abandonar_padrao;
+	ALLEGRO_BITMAP *pausa_botao_abandonar_sobre;
+
+	ALLEGRO_BITMAP *pausa_botao_sair_e_salvar_padrao;
+	ALLEGRO_BITMAP *pausa_botao_sair_e_salvar_sobre;
+
+	ALLEGRO_BITMAP *game_over_titulo;
+
+	ALLEGRO_BITMAP *game_over_botao_sair_padrao;
+	ALLEGRO_BITMAP *game_over_botao_sair_sobre;
+
+	ALLEGRO_BITMAP *game_over_botao_jogar_novamente_padrao;
+	ALLEGRO_BITMAP *game_over_botao_jogar_novamente_sobre;
+
 	ALLEGRO_BITMAP *moldura;
 	ALLEGRO_BITMAP *slot;
+
+	ALLEGRO_BITMAP *botao_pausar_padrao;
+	ALLEGRO_BITMAP *botao_pausar_sobre;
 
 	ALLEGRO_BITMAP *habilidade_desfazer_padrao;
 	ALLEGRO_BITMAP *habilidade_desfazer_pressionado;
@@ -248,6 +298,18 @@ struct Placar {
 
 struct Ajuda {
 	struct Botao botao_voltar;
+};
+
+struct Pausa {
+	struct Botao botao_resumir;
+	struct Botao botao_reiniciar;
+	struct Botao botao_abandonar;
+	struct Botao botao_sair_e_salvar;
+};
+
+struct GameOver {
+	struct Botao botao_sair;
+	struct Botao botao_jogar_novamente;
 };
 
 struct Recorde
@@ -335,6 +397,8 @@ struct Jogada {
 };
 
 struct Jogo {
+	int estado;
+
 	int escore;
 	int tempo;
 
@@ -352,6 +416,11 @@ struct Jogo {
 	struct Jogada jogada;
 
 	struct Recorde recordes[RECORDES_TAM];
+
+	struct Botao botao_pausar;
+
+	struct Pausa pausa;
+	struct GameOver game_over;
 };
 
 struct Sistema {
@@ -417,25 +486,50 @@ void carregar_sprites(struct Sprites *sprites)
 
 	sprites->placar_titulo = recortar_sprite(sprites, 0, 301, PLACAR_TITULO_L, PLACAR_TITULO_H);
 
+	sprites->pausa_titulo = recortar_sprite(sprites, 219, 25, PAUSA_TITULO_L, PAUSA_TITULO_H);
+
+	sprites->pausa_botao_resumir_padrao = recortar_sprite(sprites, 224, 65, PAUSA_BOTAO_MENU_L, PAUSA_BOTAO_MENU_H);
+	sprites->pausa_botao_resumir_sobre = recortar_sprite(sprites, 297, 65, PAUSA_BOTAO_MENU_L, PAUSA_BOTAO_MENU_H);
+
+	sprites->pausa_botao_reiniciar_padrao = recortar_sprite(sprites, 224, 79, PAUSA_BOTAO_MENU_L, PAUSA_BOTAO_MENU_H);
+	sprites->pausa_botao_reiniciar_sobre = recortar_sprite(sprites, 297, 79, PAUSA_BOTAO_MENU_L, PAUSA_BOTAO_MENU_H);
+
+	sprites->pausa_botao_abandonar_padrao = recortar_sprite(sprites, 224, 93, PAUSA_BOTAO_MENU_L, PAUSA_BOTAO_MENU_H);
+	sprites->pausa_botao_abandonar_sobre = recortar_sprite(sprites, 297, 93, PAUSA_BOTAO_MENU_L, PAUSA_BOTAO_MENU_H);
+
+	sprites->pausa_botao_sair_e_salvar_padrao = recortar_sprite(sprites, 224, 107, PAUSA_BOTAO_MENU_L, PAUSA_BOTAO_MENU_H);
+	sprites->pausa_botao_sair_e_salvar_sobre = recortar_sprite(sprites, 297, 107, PAUSA_BOTAO_MENU_L, PAUSA_BOTAO_MENU_H);
+
+	sprites->game_over_titulo = recortar_sprite(sprites, 219, 45, GAME_OVER_TITULO_L, GAME_OVER_TITULO_H);
+
+	sprites->game_over_botao_sair_padrao = recortar_sprite(sprites, 192, 127, GAME_OVER_BOTAO_L, GAME_OVER_BOTAO_H);
+	sprites->game_over_botao_sair_sobre = recortar_sprite(sprites, 277, 127, GAME_OVER_BOTAO_L, GAME_OVER_BOTAO_H);
+
+	sprites->game_over_botao_jogar_novamente_padrao = recortar_sprite(sprites, 192, 141, GAME_OVER_BOTAO_L, GAME_OVER_BOTAO_H);
+	sprites->game_over_botao_jogar_novamente_sobre = recortar_sprite(sprites, 277, 141, GAME_OVER_BOTAO_L, GAME_OVER_BOTAO_H);
+
 	sprites->moldura = recortar_sprite(sprites, 168, 0, DADO_L, DADO_H);
 	sprites->slot = recortar_sprite(sprites, 168, 25, SLOT_L, SLOT_H);
+
+	sprites->botao_pausar_padrao = recortar_sprite(sprites, 268, 0, BOTAO_PAUSAR_L, BOTAO_PAUSAR_H);
+	sprites->botao_pausar_sobre = recortar_sprite(sprites, 284, 0, BOTAO_PAUSAR_L, BOTAO_PAUSAR_H);
+
+	sprites->habilidade_desfazer_padrao = recortar_sprite(sprites, 168, 93, HABILIDADE_BOTAO_L, HABILIDADE_BOTAO_H);
+	sprites->habilidade_desfazer_pressionado = recortar_sprite(sprites, 184, 93, HABILIDADE_BOTAO_L, HABILIDADE_BOTAO_H);
+	sprites->habilidade_desfazer_desabilitado = recortar_sprite(sprites, 200, 93, HABILIDADE_BOTAO_L, HABILIDADE_BOTAO_H);
+
+	sprites->habilidade_bomba_padrao = recortar_sprite(sprites, 168, 110, HABILIDADE_BOTAO_L, HABILIDADE_BOTAO_H);
+	sprites->habilidade_bomba_pressionado = recortar_sprite(sprites, 184, 110, HABILIDADE_BOTAO_L, HABILIDADE_BOTAO_H);
+	sprites->habilidade_bomba_desabilitado = recortar_sprite(sprites, 200, 110, HABILIDADE_BOTAO_L, HABILIDADE_BOTAO_H);
+
+	sprites->habilidade_rotacao_padrao = recortar_sprite(sprites, 171, 127, HABILIDADE_BOTAO_L, HABILIDADE_BOTAO_H);
+
+	sprites->fundo_progresso = recortar_sprite(sprites, 168, 127, FUNDO_PROGRESSO_L, FUNDO_PROGRESSO_H);
 
 	sprites->botao_rotacionar_padrao = recortar_sprite(sprites, 168, 78, BOTAO_ROTACIONAR_L, BOTAO_ROTACIONAR_H);
 	sprites->botao_rotacionar_desabilitado = recortar_sprite(sprites, 182, 78, BOTAO_ROTACIONAR_L, BOTAO_ROTACIONAR_H);
 	sprites->botao_rotacionar_ativo_padrao = recortar_sprite(sprites, 196, 78, BOTAO_ROTACIONAR_L, BOTAO_ROTACIONAR_H);
 	sprites->botao_rotacionar_ativo_pressionado = recortar_sprite(sprites, 210, 78, BOTAO_ROTACIONAR_L, BOTAO_ROTACIONAR_H);
-
-	sprites->habilidade_desfazer_padrao = recortar_sprite(sprites, 168, 93, BOTAO_HABILIDADE_L, BOTAO_HABILIDADE_H);
-	sprites->habilidade_desfazer_pressionado = recortar_sprite(sprites, 184, 93, BOTAO_HABILIDADE_L, BOTAO_HABILIDADE_H);
-	sprites->habilidade_desfazer_desabilitado = recortar_sprite(sprites, 200, 93, BOTAO_HABILIDADE_L, BOTAO_HABILIDADE_H);
-
-	sprites->habilidade_bomba_padrao = recortar_sprite(sprites, 168, 110, BOTAO_HABILIDADE_L, BOTAO_HABILIDADE_H);
-	sprites->habilidade_bomba_pressionado = recortar_sprite(sprites, 184, 110, BOTAO_HABILIDADE_L, BOTAO_HABILIDADE_H);
-	sprites->habilidade_bomba_desabilitado = recortar_sprite(sprites, 200, 110, BOTAO_HABILIDADE_L, BOTAO_HABILIDADE_H);
-
-	sprites->habilidade_rotacao_padrao = recortar_sprite(sprites, 216, 93, BOTAO_HABILIDADE_L, BOTAO_HABILIDADE_H);
-
-	sprites->fundo_progresso = recortar_sprite(sprites, 168, 127, FUNDO_PROGRESSO_L, FUNDO_PROGRESSO_H);
 
 	for (int i = 0; i < CORES_NUM; i++)
 	{
@@ -519,8 +613,8 @@ void criar_canvas(struct Tela *tela)
 		tela->escala = 1;
 	}
 
-	tela->largura = largura_janela / tela->escala;
-	tela->altura = altura_janela / tela->escala;
+	tela->largura = ceil(largura_janela / tela->escala);
+	tela->altura = ceil(altura_janela / tela->escala);
 
 	tela->canvas = al_create_bitmap(tela->largura, tela->altura);
 	verificar_init(tela->canvas, "canvas");
@@ -559,7 +653,7 @@ void transicionar_para_cena(struct Sistema *sistema, int cena)
 	sistema->cena = cena;
 }
 
-void detectar_sobreposicao_botao(struct Botao *botao, int px, int py)
+void detectar_sobre_botao(struct Botao *botao, int px, int py)
 {
 	botao->sobre = colisao_retangulo(botao->x, botao->y, botao->largura, botao->altura, px, py);
 }
@@ -668,17 +762,22 @@ bool usar_habilidade(struct Habilidade *habilidade)
 	return false;
 }
 
+void resetar_habilidade(struct Habilidade *habilidade)
+{
+	habilidade->bloqueado = false;
+
+	habilidade->quantidade = 3;
+	habilidade->progresso = 0;
+}
+
 void inicializar_habilidade(struct Habilidade *habilidade, int custo, bool cumulativo)
 {
 	habilidade->custo = custo;
 	habilidade->cumulativo = cumulativo;
 
-	habilidade->bloqueado = false;
+	inicializar_botao(&habilidade->botao, HABILIDADE_BOTAO_L, HABILIDADE_BOTAO_H);
 
-	habilidade->quantidade = 0;
-	habilidade->progresso = 0;
-
-	inicializar_botao(&habilidade->botao, BOTAO_HABILIDADE_L, BOTAO_HABILIDADE_H);
+	resetar_habilidade(habilidade);
 }
 
 void posicionar_habilidade(struct Habilidade *habilidade, int x, int y)
@@ -704,8 +803,8 @@ void desenhar_habilidade(struct Habilidade *habilidade, struct Tela *tela)
 	int progresso_y1 = habilidade->y + HABILIDADE_PROGRESSO_OFFSET_CIMA + 1;
 	int progresso_y2 = progresso_y1 - altura;
 
-	int quantidade_x = habilidade->botao.x + BOTAO_HABILIDADE_L + HABILIDADE_QUANTIDADE_ESPACO;
-	int quantidade_y = centro(habilidade->botao.y, BOTAO_HABILIDADE_H, al_get_font_line_height(tela->fontes.pixelmix_8));
+	int quantidade_x = habilidade->botao.x + HABILIDADE_BOTAO_L + HABILIDADE_QUANTIDADE_ESPACO;
+	int quantidade_y = centro(habilidade->botao.y, HABILIDADE_BOTAO_H, al_get_font_line_height(tela->fontes.pixelmix_8));
 
 	al_draw_bitmap(tela->sprites.fundo_progresso, habilidade->x, habilidade->y, 0);
 	al_draw_line(progresso_x, progresso_y1, progresso_x, progresso_y2, COR_PROGRESSO, 1);
@@ -915,7 +1014,7 @@ void posicionar_quadro(struct Quadro *quadro, struct Tela *tela)
 	quadro->y = tela->altura - QUADRO_H - MARGEM_PEQUENA;
 }
 
-void inicializar_quadro(struct Quadro *quadro)
+void resetar_quadro(struct Quadro *quadro)
 {
 	quadro->concluido = true;
 
@@ -936,6 +1035,14 @@ void inicializar_quadro(struct Quadro *quadro)
 			quadro->dados[i][j].valor = DADO_VAZIO;
 		}
 	}
+}
+
+void inicializar_quadro(struct Quadro *quadro)
+{
+	quadro->x = 0;
+	quadro->y = 0;
+
+	resetar_quadro(quadro);
 }
 
 void desenhar_baloes_horizontais(struct Quadro *quadro, struct Tela *tela)
@@ -1167,8 +1274,8 @@ void gerar_slot(struct Slot *slot)
 void pegar_slot(struct Slot *slot, int x, int y)
 {
 	slot->arrastando = true;
-	slot->arraste_x = slot->x - x;
-	slot->arraste_y = slot->y - y;
+	slot->arraste_x = slot->peca.x - x;
+	slot->arraste_y = slot->peca.y - y;
 }
 
 void arrastar_slot(struct Slot *slot, int x, int y)
@@ -1218,6 +1325,15 @@ bool largar_slot(struct Quadro *quadro, struct Slot *slot, int *linha, int *colu
 	return false;
 }
 
+void resetar_slot(struct Slot *slot)
+{
+	slot->ocupado = true;
+	slot->arrastando = false;
+	slot->rotacionando = false;
+
+	gerar_slot(slot);
+}
+
 void inicializar_slot(struct Slot *slot, struct Sprites *sprites)
 {
 	slot->x = 0;
@@ -1226,14 +1342,12 @@ void inicializar_slot(struct Slot *slot, struct Sprites *sprites)
 	slot->arraste_x = 0;
 	slot->arraste_y = 0;
 
-	slot->ocupado = false;
-	slot->arrastando = false;
-	slot->rotacionando = false;
-
 	inicializar_botao(&slot->botao_rotacionar, BOTAO_ROTACIONAR_L, BOTAO_ROTACIONAR_H);
 
 	slot->botao_rotacionar.sprite_desabilitado = sprites->botao_rotacionar_desabilitado;
 	slot->botao_rotacionar.sprite_pressionado = sprites->botao_rotacionar_ativo_pressionado;
+
+	resetar_slot(slot);
 }
 
 void desenhar_slot(struct Slot *slot, struct Tela *tela)
@@ -1276,6 +1390,14 @@ bool slot_vazios(struct Slot slots[SLOTS_TAM])
 	}
 
 	return true;
+}
+
+void resetar_slots(struct Slot slots[SLOTS_TAM])
+{
+	for (int i = 0; i < SLOTS_TAM; i++)
+	{
+		resetar_slot(&slots[i]);
+	}
 }
 
 void inicializar_slots(struct Slot slots[SLOTS_TAM], struct Sprites *sprites)
@@ -1332,7 +1454,9 @@ void pontuar_multilinha(struct Jogo *jogo, int linhas)
 void pontuar_combo(struct Jogo *jogo, int linhas)
 {
 	if (jogo->combo == 1)
+	{
 		acumular_habilidade(&jogo->bomba, 1);
+	}
 
 	incrementar_score(jogo, PONTOS_COMBO * linhas);
 }
@@ -1461,6 +1585,13 @@ void inicializar_rotacao(struct Habilidade *rotacao, struct Sprites *sprites)
 	rotacao->botao.sprite_desabilitado = sprites->habilidade_rotacao_padrao;
 }
 
+void resetar_habilidades(struct Jogo *jogo)
+{
+	resetar_habilidade(&jogo->desfazer);
+	resetar_habilidade(&jogo->bomba);
+	resetar_habilidade(&jogo->rotacao);
+}
+
 void inicializar_habilidades(struct Jogo *jogo, struct Sprites *sprites)
 {
 	inicializar_desfazer(&jogo->desfazer, sprites);
@@ -1470,10 +1601,10 @@ void inicializar_habilidades(struct Jogo *jogo, struct Sprites *sprites)
 
 void posicionar_habilidades(struct Jogo *jogo, struct Tela *tela)
 {
-	int espaco_y = BOTAO_HABILIDADE_H + HABILIDADES_ESPACO;
+	int espaco_y = HABILIDADE_BOTAO_H + HABILIDADES_ESPACO;
 
 	int x = MARGEM_PEQUENA;
-	int y = tela->altura - MARGEM_PEQUENA - BOTAO_HABILIDADE_H;
+	int y = tela->altura - MARGEM_PEQUENA - HABILIDADE_BOTAO_H;
 
 	posicionar_habilidade(&jogo->rotacao, x, y);
 
@@ -1498,18 +1629,161 @@ void atualizar_habilidades(struct Jogo *jogo)
 	atualizar_habilidade(&jogo->desfazer);
 }
 
-void inicializar_jogo(struct Jogo *jogo, struct Sprites *sprites)
+void resetar_jogo(struct Jogo *jogo)
 {
+	jogo->estado = ESTADO_RODANDO;
+
 	jogo->escore = 0;
 	jogo->tempo = 0;
 
 	jogo->combo = 1;
 
-	jogo->slot_selecionado = -1;
+	jogo->slot_selecionado = 1;
+
+	resetar_quadro(&jogo->quadro);
+	resetar_slots(jogo->slots);
+	resetar_habilidades(&jogo);
+}
+
+void mudar_estado(struct Jogo *jogo, int estado)
+{
+	jogo->estado = estado;
+}
+
+void pausar_jogo(struct Jogo *jogo)
+{
+	mudar_estado(jogo, ESTADO_PAUSADO);
+}
+
+void resumir_jogo(struct Jogo *jogo)
+{
+	mudar_estado(jogo, ESTADO_RODANDO);
+}
+
+void sair_do_jogo(struct Sistema *sistema)
+{
+	transicionar_para_cena(sistema, CENA_INICIO);
+}
+
+void inicializar_pausa(struct Pausa *pausa, struct Sprites *sprites)
+{
+	inicializar_botao(&pausa->botao_resumir, PAUSA_BOTAO_MENU_L, PAUSA_BOTAO_MENU_H);
+	inicializar_botao(&pausa->botao_reiniciar, PAUSA_BOTAO_MENU_L, PAUSA_BOTAO_MENU_H);
+	inicializar_botao(&pausa->botao_abandonar, PAUSA_BOTAO_MENU_L, PAUSA_BOTAO_MENU_H);
+	inicializar_botao(&pausa->botao_sair_e_salvar, PAUSA_BOTAO_MENU_L, PAUSA_BOTAO_MENU_H);
+
+	pausa->botao_resumir.sprite_padrao = sprites->pausa_botao_resumir_padrao;
+	pausa->botao_resumir.sprite_sobre = sprites->pausa_botao_resumir_sobre;
+	pausa->botao_resumir.sprite_pressionado = sprites->pausa_botao_resumir_padrao;
+	pausa->botao_resumir.sprite_desabilitado = sprites->pausa_botao_resumir_padrao;
+
+	pausa->botao_reiniciar.sprite_padrao = sprites->pausa_botao_reiniciar_padrao;
+	pausa->botao_reiniciar.sprite_sobre = sprites->pausa_botao_reiniciar_sobre;
+	pausa->botao_reiniciar.sprite_pressionado = sprites->pausa_botao_reiniciar_padrao;
+	pausa->botao_reiniciar.sprite_desabilitado = sprites->pausa_botao_reiniciar_padrao;
+
+	pausa->botao_abandonar.sprite_padrao = sprites->pausa_botao_abandonar_padrao;
+	pausa->botao_abandonar.sprite_sobre = sprites->pausa_botao_abandonar_sobre;
+	pausa->botao_abandonar.sprite_pressionado = sprites->pausa_botao_abandonar_padrao;
+	pausa->botao_abandonar.sprite_desabilitado = sprites->pausa_botao_abandonar_padrao;
+
+	pausa->botao_sair_e_salvar.sprite_padrao = sprites->pausa_botao_sair_e_salvar_padrao;
+	pausa->botao_sair_e_salvar.sprite_sobre = sprites->pausa_botao_sair_e_salvar_sobre;
+	pausa->botao_sair_e_salvar.sprite_pressionado = sprites->pausa_botao_sair_e_salvar_padrao;
+	pausa->botao_sair_e_salvar.sprite_desabilitado = sprites->pausa_botao_sair_e_salvar_padrao;
+}
+
+void posicionar_pausa(struct Pausa *pausa, struct Tela *tela)
+{
+	int menu_x = centro(0, tela->largura, PAUSA_BOTAO_MENU_L);
+	int menu_y =  centro(0, tela->altura, PAUSA_H);
+
+	menu_y += PAUSA_TITULO_H;
+	menu_y += PAUSA_TITULO_ESPACO;
+
+	pausa->botao_resumir.x = menu_x;
+	pausa->botao_resumir.y = menu_y;
+
+	menu_y += PAUSA_BOTAO_MENU_H;
+	menu_y += PAUSA_BOTOES_ESPACO;
+
+	pausa->botao_reiniciar.x = menu_x;
+	pausa->botao_reiniciar.y = menu_y;
+
+	menu_y += PAUSA_BOTAO_MENU_H;
+	menu_y += PAUSA_BOTOES_ESPACO;
+
+	pausa->botao_abandonar.x = menu_x;
+	pausa->botao_abandonar.y = menu_y;
+
+	menu_y += PAUSA_BOTAO_MENU_H;
+	menu_y += PAUSA_BOTOES_ESPACO;
+
+	pausa->botao_sair_e_salvar.x = menu_x;
+	pausa->botao_sair_e_salvar.y = menu_y;
+}
+
+void desenhar_pausa(struct Pausa *pausa, struct Tela *tela)
+{
+	int titulo_x = centro(0, tela->largura, PAUSA_TITULO_L);
+	int titulo_y = centro(0, tela->altura, PAUSA_H);
+
+	al_draw_bitmap(tela->sprites.pausa_titulo, titulo_x, titulo_y, 0);
+
+	desenhar_botao(&pausa->botao_resumir);
+	desenhar_botao(&pausa->botao_reiniciar);
+	desenhar_botao(&pausa->botao_abandonar);
+	desenhar_botao(&pausa->botao_sair_e_salvar);
+}
+
+void inicializar_game_over(struct GameOver *game_over, struct Sprites *sprites)
+{
+	inicializar_botao(&game_over->botao_sair, GAME_OVER_BOTAO_L, GAME_OVER_BOTAO_H);
+	inicializar_botao(&game_over->botao_jogar_novamente, GAME_OVER_BOTAO_L, GAME_OVER_BOTAO_H);
+
+	game_over->botao_sair.sprite_padrao = sprites->game_over_botao_sair_padrao;
+	game_over->botao_sair.sprite_sobre = sprites->game_over_botao_sair_sobre;
+	game_over->botao_sair.sprite_pressionado = sprites->game_over_botao_sair_padrao;
+	game_over->botao_sair.sprite_desabilitado = sprites->game_over_botao_sair_padrao;
+
+	game_over->botao_jogar_novamente.sprite_padrao = sprites->game_over_botao_jogar_novamente_padrao;
+	game_over->botao_jogar_novamente.sprite_sobre = sprites->game_over_botao_jogar_novamente_sobre;
+	game_over->botao_jogar_novamente.sprite_pressionado = sprites->game_over_botao_jogar_novamente_padrao;
+	game_over->botao_jogar_novamente.sprite_desabilitado = sprites->game_over_botao_jogar_novamente_padrao;
+}
+
+void posicionar_game_over(struct Pausa *game_over)
+{
+
+}
+
+void desenhar_game_over(struct Pausa *game_over)
+{
+}
+
+void inicializar_jogo(struct Jogo *jogo, struct Sprites *sprites)
+{
+	jogo->estado = ESTADO_RODANDO;
+
+	jogo->escore = 0;
+	jogo->tempo = 0;
+
+	jogo->combo = 1;
+
+	jogo->slot_selecionado = 1;
 
 	inicializar_quadro(&jogo->quadro);
 	inicializar_slots(jogo->slots, sprites);
 	inicializar_habilidades(jogo, sprites);
+	inicializar_pausa(&jogo->pausa, sprites);
+	inicializar_game_over(&jogo->game_over, sprites);
+
+	inicializar_botao(&jogo->botao_pausar, BOTAO_PAUSAR_L, BOTAO_PAUSAR_L);
+
+	jogo->botao_pausar.sprite_padrao = sprites->botao_pausar_padrao;
+	jogo->botao_pausar.sprite_sobre = sprites->botao_pausar_sobre;
+	jogo->botao_pausar.sprite_pressionado = sprites->botao_pausar_padrao;
+	jogo->botao_pausar.sprite_desabilitado = sprites->botao_pausar_padrao;
 }
 
 void posicionar_jogo(struct Jogo *jogo, struct Tela *tela)
@@ -1517,6 +1791,11 @@ void posicionar_jogo(struct Jogo *jogo, struct Tela *tela)
 	posicionar_quadro(&jogo->quadro, tela);
 	posicionar_slots(jogo->slots, tela);
 	posicionar_habilidades(jogo, tela);
+	posicionar_pausa(&jogo->pausa, tela);
+	posicionar_game_over(&jogo->game_over);
+
+	jogo->botao_pausar.x = MARGEM_PEQUENA;
+	jogo->botao_pausar.y = BOTAO_PAUSAR_OFFSET_CIMA;
 }
 
 void atualizar_slots(struct Jogo *jogo)
@@ -1593,7 +1872,7 @@ void desenhar_pontuacao(struct Jogo *jogo, struct Tela *tela)
 	al_draw_textf(tela->fontes.pixelmix_8, COR_PRETO, MARGEM_PEQUENA, TEMPO_OFFSET_CIMA, ALLEGRO_ALIGN_LEFT, "%02d:%02d", minutos, segundos);
 }
 
-void cena_jogo(struct Tela *tela, struct Sistema *sistema, ALLEGRO_EVENT *evento)
+void controlar_jogo_rodando(struct Tela *tela, struct Sistema *sistema, ALLEGRO_EVENT *evento)
 {
 	switch (evento->type)
 	{
@@ -1609,13 +1888,15 @@ void cena_jogo(struct Tela *tela, struct Sistema *sistema, ALLEGRO_EVENT *evento
 			int mouse_x = evento->mouse.x / tela->escala;
 			int mouse_y = evento->mouse.y / tela->escala;
 
-			detectar_sobreposicao_botao(&sistema->jogo.desfazer.botao, mouse_x, mouse_y);
-			detectar_sobreposicao_botao(&sistema->jogo.bomba.botao, mouse_x, mouse_y);
-			detectar_sobreposicao_botao(&sistema->jogo.rotacao.botao, mouse_x, mouse_y);
+			detectar_sobre_botao(&sistema->jogo.desfazer.botao, mouse_x, mouse_y);
+			detectar_sobre_botao(&sistema->jogo.bomba.botao, mouse_x, mouse_y);
+			detectar_sobre_botao(&sistema->jogo.rotacao.botao, mouse_x, mouse_y);
+			
+			detectar_sobre_botao(&sistema->jogo.botao_pausar, mouse_x, mouse_y);
 
 			for (int i = 0; i < SLOTS_TAM; i++)
 			{
-				detectar_sobreposicao_botao(&sistema->jogo.slots[i].botao_rotacionar, mouse_x, mouse_y);
+				detectar_sobre_botao(&sistema->jogo.slots[i].botao_rotacionar, mouse_x, mouse_y);
 			}
 
 			if (sistema->jogo.slot_selecionado != -1)
@@ -1640,6 +1921,12 @@ void cena_jogo(struct Tela *tela, struct Sistema *sistema, ALLEGRO_EVENT *evento
 				if (pressionar_botao(&sistema->jogo.bomba.botao))
 				{
 					usar_bomba(&sistema->jogo);
+				}
+
+				if (pressionar_botao(&sistema->jogo.botao_pausar))
+				{
+					pausar_jogo(&sistema->jogo);
+					soltar_botao(&sistema->jogo.botao_pausar);
 				}
 
 				for (int i = 0; i < SLOTS_TAM; i++)
@@ -1709,7 +1996,76 @@ void cena_jogo(struct Tela *tela, struct Sistema *sistema, ALLEGRO_EVENT *evento
 					rotacionar_slot(&sistema->jogo.slots[sistema->jogo.slot_selecionado]);
 				}
 			}
+
+			if (evento->keyboard.keycode == ALLEGRO_KEY_ESCAPE)
+			{
+				pausar_jogo(&sistema->jogo);
+			}
 			break;
+	}
+
+}
+
+void controlar_jogo_pausado(struct Tela *tela, struct Sistema *sistema, ALLEGRO_EVENT *evento)
+{
+	switch (evento->type)
+	{
+		case ALLEGRO_EVENT_MOUSE_AXES:
+		{
+			int mouse_x = evento->mouse.x / tela->escala;
+			int mouse_y = evento->mouse.y / tela->escala;
+
+			detectar_sobre_botao(&sistema->jogo.pausa.botao_resumir, mouse_x, mouse_y);
+			detectar_sobre_botao(&sistema->jogo.pausa.botao_reiniciar, mouse_x, mouse_y);
+			detectar_sobre_botao(&sistema->jogo.pausa.botao_abandonar, mouse_x, mouse_y);
+			detectar_sobre_botao(&sistema->jogo.pausa.botao_sair_e_salvar, mouse_x, mouse_y);
+
+			break;
+		}
+		case ALLEGRO_EVENT_MOUSE_BUTTON_DOWN:
+			if (pressionar_botao(&sistema->jogo.pausa.botao_resumir))
+			{
+				resumir_jogo(&sistema->jogo);
+				soltar_botao(&sistema->jogo.pausa.botao_resumir);
+			}
+
+			if (pressionar_botao(&sistema->jogo.pausa.botao_reiniciar))
+			{
+				resetar_jogo(&sistema->jogo);
+				soltar_botao(&sistema->jogo.pausa.botao_reiniciar);
+			}
+
+			if (pressionar_botao(&sistema->jogo.pausa.botao_abandonar))
+			{
+				sair_do_jogo(sistema);
+				soltar_botao(&sistema->jogo.pausa.botao_abandonar);
+			}
+
+			if (pressionar_botao(&sistema->jogo.pausa.botao_sair_e_salvar))
+			{
+				sair_do_jogo(sistema);
+				soltar_botao(&sistema->jogo.pausa.botao_sair_e_salvar);
+			}
+			break;
+		case ALLEGRO_EVENT_KEY_DOWN:
+			if (evento->keyboard.keycode == ALLEGRO_KEY_ESCAPE)
+			{
+				resumir_jogo(&sistema->jogo);
+			}
+			break;
+	}
+}
+
+void cena_jogo(struct Tela *tela, struct Sistema *sistema, ALLEGRO_EVENT *evento)
+{
+	switch (sistema->jogo.estado)
+	{
+	case ESTADO_RODANDO:
+		controlar_jogo_rodando(tela, sistema, evento);
+		break;
+	case ESTADO_PAUSADO:
+		controlar_jogo_pausado(tela, sistema, evento);
+		break;
 	}
 
 	if (sistema->redesenhar)
@@ -1721,9 +2077,26 @@ void cena_jogo(struct Tela *tela, struct Sistema *sistema, ALLEGRO_EVENT *evento
 		desenhar_habilidades(&sistema->jogo, tela);
 		desenhar_pontuacao(&sistema->jogo, tela);
 
+		desenhar_botao(&sistema->jogo.botao_pausar);
+
 		if (sistema->jogo.slot_selecionado != -1)
 		{
 			desenhar_peca(&sistema->jogo.slots[sistema->jogo.slot_selecionado].peca, tela);
+		}
+
+		if (sistema->jogo.estado == ESTADO_PAUSADO || sistema->jogo.estado == ESTADO_GAME_OVER)
+		{
+			al_draw_filled_rectangle(0, 0, tela->largura, tela->altura, COR_SOBREPOSICAO);
+
+			switch (sistema->jogo.estado)
+			{
+				case ESTADO_PAUSADO:
+					desenhar_pausa(&sistema->jogo.pausa, tela);
+					break;
+				case ESTADO_GAME_OVER:
+					desenhar_game_over(&sistema->jogo.game_over, tela);
+					break;
+			}
 		}
 
 		finalizar_desenho(tela);
@@ -1803,17 +2176,18 @@ void cena_inicio(struct Tela *tela, struct Sistema *sistema, ALLEGRO_EVENT *even
 			int mouse_x = evento->mouse.x / tela->escala;
 			int mouse_y = evento->mouse.y / tela->escala;
 
-			detectar_sobreposicao_botao(&sistema->inicio.botao_continuar_jogo, mouse_x, mouse_y);
-			detectar_sobreposicao_botao(&sistema->inicio.botao_novo_jogo, mouse_x, mouse_y);
-			detectar_sobreposicao_botao(&sistema->inicio.botao_sair, mouse_x, mouse_y);
-			detectar_sobreposicao_botao(&sistema->inicio.botao_placar, mouse_x, mouse_y);
-			detectar_sobreposicao_botao(&sistema->inicio.botao_ajuda, mouse_x, mouse_y);
+			detectar_sobre_botao(&sistema->inicio.botao_continuar_jogo, mouse_x, mouse_y);
+			detectar_sobre_botao(&sistema->inicio.botao_novo_jogo, mouse_x, mouse_y);
+			detectar_sobre_botao(&sistema->inicio.botao_sair, mouse_x, mouse_y);
+			detectar_sobre_botao(&sistema->inicio.botao_placar, mouse_x, mouse_y);
+			detectar_sobre_botao(&sistema->inicio.botao_ajuda, mouse_x, mouse_y);
 
 			break;
 		}
 		case ALLEGRO_EVENT_MOUSE_BUTTON_DOWN:
 			if (pressionar_botao(&sistema->inicio.botao_novo_jogo))
 			{
+				resetar_jogo(&sistema->jogo);
 				transicionar_para_cena(sistema, CENA_JOGO);
 				soltar_botao(&sistema->inicio.botao_novo_jogo);
 			}
@@ -1881,7 +2255,7 @@ void cena_placar(struct Tela *tela, struct Sistema *sistema, ALLEGRO_EVENT *even
 			int mouse_x = evento->mouse.x / tela->escala;
 			int mouse_y = evento->mouse.y / tela->escala;
 
-			detectar_sobreposicao_botao(&sistema->placar.botao_voltar, mouse_x, mouse_y);
+			detectar_sobre_botao(&sistema->placar.botao_voltar, mouse_x, mouse_y);
 
 			break;
 		}
