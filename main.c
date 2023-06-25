@@ -1223,6 +1223,9 @@ void inicializar_slot(struct Slot *slot, struct Sprites *sprites)
 	slot->x = 0;
 	slot->y = 0;
 
+	slot->arraste_x = 0;
+	slot->arraste_y = 0;
+
 	slot->ocupado = false;
 	slot->arrastando = false;
 	slot->rotacionando = false;
@@ -1488,15 +1491,32 @@ void desenhar_habilidades(struct Jogo *jogo, struct Tela *tela)
 	desenhar_habilidade(&jogo->desfazer, tela);
 }
 
-void desenhar_pontuacao(struct Jogo *jogo, struct Tela *tela)
+void atualizar_habilidades(struct Jogo *jogo)
 {
-	int total_segundos = jogo->tempo * PERIODO_TICK;
+	atualizar_habilidade(&jogo->rotacao);
+	atualizar_habilidade(&jogo->bomba);
+	atualizar_habilidade(&jogo->desfazer);
+}
 
-	int minutos = total_segundos / 60;
-	int segundos = total_segundos % 60;
+void inicializar_jogo(struct Jogo *jogo, struct Sprites *sprites)
+{
+	jogo->escore = 0;
+	jogo->tempo = 0;
 
-	al_draw_textf(tela->fontes.fipps_12, COR_PRETO, MARGEM_PEQUENA, ESCORE_OFFSET_CIMA, ALLEGRO_ALIGN_LEFT, "%03d", jogo->escore);
-	al_draw_textf(tela->fontes.pixelmix_8, COR_PRETO, MARGEM_PEQUENA, TEMPO_OFFSET_CIMA, ALLEGRO_ALIGN_LEFT, "%02d:%02d", minutos, segundos);
+	jogo->combo = 1;
+
+	jogo->slot_selecionado = -1;
+
+	inicializar_quadro(&jogo->quadro);
+	inicializar_slots(jogo->slots, sprites);
+	inicializar_habilidades(jogo, sprites);
+}
+
+void posicionar_jogo(struct Jogo *jogo, struct Tela *tela)
+{
+	posicionar_quadro(&jogo->quadro, tela);
+	posicionar_slots(jogo->slots, tela);
+	posicionar_habilidades(jogo, tela);
 }
 
 void atualizar_slots(struct Jogo *jogo)
@@ -1559,6 +1579,154 @@ void atualizar_quadro(struct Jogo *jogo)
 		}
 
 		analisar_tabuleiro_concluido(jogo);
+	}
+}
+
+void desenhar_pontuacao(struct Jogo *jogo, struct Tela *tela)
+{
+	int total_segundos = jogo->tempo * PERIODO_TICK;
+
+	int minutos = total_segundos / 60;
+	int segundos = total_segundos % 60;
+
+	al_draw_textf(tela->fontes.fipps_12, COR_PRETO, MARGEM_PEQUENA, ESCORE_OFFSET_CIMA, ALLEGRO_ALIGN_LEFT, "%03d", jogo->escore);
+	al_draw_textf(tela->fontes.pixelmix_8, COR_PRETO, MARGEM_PEQUENA, TEMPO_OFFSET_CIMA, ALLEGRO_ALIGN_LEFT, "%02d:%02d", minutos, segundos);
+}
+
+void cena_jogo(struct Tela *tela, struct Sistema *sistema, ALLEGRO_EVENT *evento)
+{
+	switch (evento->type)
+	{
+		case ALLEGRO_EVENT_TIMER:
+			atualizar_quadro(&sistema->jogo);
+			atualizar_slots(&sistema->jogo);
+			atualizar_habilidades(&sistema->jogo);
+
+			sistema->jogo.tempo++;
+			break;
+		case ALLEGRO_EVENT_MOUSE_AXES:
+		{
+			int mouse_x = evento->mouse.x / tela->escala;
+			int mouse_y = evento->mouse.y / tela->escala;
+
+			detectar_sobreposicao_botao(&sistema->jogo.desfazer.botao, mouse_x, mouse_y);
+			detectar_sobreposicao_botao(&sistema->jogo.bomba.botao, mouse_x, mouse_y);
+			detectar_sobreposicao_botao(&sistema->jogo.rotacao.botao, mouse_x, mouse_y);
+
+			for (int i = 0; i < SLOTS_TAM; i++)
+			{
+				detectar_sobreposicao_botao(&sistema->jogo.slots[i].botao_rotacionar, mouse_x, mouse_y);
+			}
+
+			if (sistema->jogo.slot_selecionado != -1)
+			{
+				arrastar_slot(&sistema->jogo.slots[sistema->jogo.slot_selecionado], mouse_x, mouse_y);
+			}
+
+			break;
+		}
+		case ALLEGRO_EVENT_MOUSE_BUTTON_DOWN:
+		{
+			int mouse_x = evento->mouse.x / tela->escala;
+			int mouse_y = evento->mouse.y / tela->escala;
+
+			if (evento->mouse.button & 1)
+			{
+				if (pressionar_botao(&sistema->jogo.desfazer.botao))
+				{
+					usar_desfazer(&sistema->jogo);
+				}
+
+				if (pressionar_botao(&sistema->jogo.bomba.botao))
+				{
+					usar_bomba(&sistema->jogo);
+				}
+
+				for (int i = 0; i < SLOTS_TAM; i++)
+				{
+					if (pressionar_botao(&sistema->jogo.slots[i].botao_rotacionar))
+					{
+						usar_rotacao(&sistema->jogo, &sistema->jogo.slots[i]);
+					}
+				}
+
+				for (int i = 0; i < SLOTS_TAM; i++)
+				{
+					if (colisao_slot(&sistema->jogo.slots[i], mouse_x, mouse_y))
+					{
+						sistema->jogo.slot_selecionado = i;
+						pegar_slot(&sistema->jogo.slots[i], mouse_x, mouse_y);
+					}
+				}
+			}
+
+			break;
+		}
+		case ALLEGRO_EVENT_MOUSE_BUTTON_UP:
+			if (evento->mouse.button & 1)
+			{
+				soltar_botao(&sistema->jogo.desfazer.botao);
+				soltar_botao(&sistema->jogo.bomba.botao);
+				soltar_botao(&sistema->jogo.rotacao.botao);
+
+				for (int i = 0; i < SLOTS_TAM; i++)
+				{
+					soltar_botao(&sistema->jogo.slots[i].botao_rotacionar);
+				}
+
+				if (sistema->jogo.slot_selecionado != -1)
+				{
+					struct Slot *slot = &sistema->jogo.slots[sistema->jogo.slot_selecionado];
+
+					int linha;
+					int coluna;
+
+					if (largar_slot(&sistema->jogo.quadro, slot, &linha, &coluna))
+					{
+						registrar_jogada(&sistema->jogo, sistema->jogo.slot_selecionado, linha, coluna);
+						analisar_consequencias(&sistema->jogo);
+
+						if (slot_vazios(sistema->jogo.slots))
+						{
+							gerar_slots(sistema->jogo.slots);
+						}
+					}
+
+					sistema->jogo.slot_selecionado = -1;;
+				}
+			}
+			break;
+		case ALLEGRO_EVENT_KEY_DOWN:
+			if (sistema->jogo.slot_selecionado != -1)
+			{
+				if (evento->keyboard.keycode == ALLEGRO_KEY_SPACE)
+				{
+					gerar_slot(&sistema->jogo.slots[sistema->jogo.slot_selecionado]);
+				}
+
+				if (evento->keyboard.keycode == ALLEGRO_KEY_R)
+				{
+					rotacionar_slot(&sistema->jogo.slots[sistema->jogo.slot_selecionado]);
+				}
+			}
+			break;
+	}
+
+	if (sistema->redesenhar)
+	{
+		preparar_desenho(tela);
+
+		desenhar_quadro(&sistema->jogo.quadro, tela);
+		desenhar_slots(sistema->jogo.slots, tela);
+		desenhar_habilidades(&sistema->jogo, tela);
+		desenhar_pontuacao(&sistema->jogo, tela);
+
+		if (sistema->jogo.slot_selecionado != -1)
+		{
+			desenhar_peca(&sistema->jogo.slots[sistema->jogo.slot_selecionado].peca, tela);
+		}
+
+		finalizar_desenho(tela);
 	}
 }
 
@@ -1787,6 +1955,7 @@ int main()
 
 	inicializar_inicio(&sistema.inicio, &tela.sprites);
 	inicializar_placar(&sistema.placar, &tela.sprites);
+	inicializar_jogo(&sistema.jogo, &tela.sprites);
 
 	al_start_timer(timer);
 
@@ -1831,6 +2000,7 @@ int main()
 		{
 			posicionar_inicio(&sistema.inicio, &tela);
 			posicionar_placar(&sistema.placar, &tela);
+			posicionar_jogo(&sistema.jogo, &tela);
 		}
 
 		sistema.redesenhar = redesenhar && al_event_queue_is_empty(queue);
@@ -1842,12 +2012,15 @@ int main()
 
 		switch (sistema.cena)
 		{
-		case CENA_INICIO:
-			cena_inicio(&tela, &sistema, &evento);
-			break;
-		case CENA_PLACAR:
-			cena_placar(&tela, &sistema, &evento);
-			break;
+			case CENA_INICIO:
+				cena_inicio(&tela, &sistema, &evento);
+				break;
+			case CENA_PLACAR:
+				cena_placar(&tela, &sistema, &evento);
+				break;
+			case CENA_JOGO:
+				cena_jogo(&tela, &sistema, &evento);
+				break;
 		}
 	}
 }
