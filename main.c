@@ -10,8 +10,6 @@
 #include <allegro5/allegro_image.h>
 #include <allegro5/allegro_primitives.h>
 
-#define PI 3.14159265358979323846
-
 #define PECA_TAM 2
 
 #define QUADRO_TAM 5
@@ -30,92 +28,17 @@
 
 #define SOMA_TAM (2 * QUADRO_TAM)
 
-#define DIRECAO_LINHA 0
-#define DIRECAO_COLUNA 1
-
-#define DIRECOES_NUM 2
-
-#define ANIMACAO_PARADO 0
-#define ANIMACAO_COLAPSO 1
-#define ANIMACAO_EXPLOSAO 2
-
-#define LIMITE_BALAO_0 6
-#define LIMITE_BALAO_1 9
-#define LIMITE_BALAO_2 10
-
-#define PONTOS_DADO 1
-#define PONTOS_COMBO 5
-#define PONTOS_MULTILINHA 7
-#define PONTOS_TABULEIRO_CONCLUIDO 10
-
-#define DESFAZER_TABULEIROS_CONCLUIDOS 1
-#define BOMBA_COMBINACOES 5
-#define ROTACAO_PONTOS 50
-
-#define DADO_VAZIO -1
-
-#define PERIODO_TICK (1.0 / 60.0)
-
-#define ESPACO_ENTRE_DADOS 1
-#define ESPACO_ENTRE_SLOTS 1
-#define ESPACO_ENTRE_HABILIDADES 4
-#define ESPACO_BALAO 1
-#define ESPACO_PROGRESSO_HABILIDADE 2
-#define ESPACO_QUANTIDADE_HABILIDADE 4
-
-#define DADO_L 24
-#define DADO_H 25
-
-#define SLOT_L 51
-#define SLOT_H 53
-
-#define BALAO_HORIZONTAL_L 19
-#define BALAO_HORIZONTAL_H 11
-
-#define BALAO_HORIZONTAL_OFFSET_DIREITA 1
-#define BALAO_HORIZONTAL_OFFSET_CIMA 12
-
-#define BALAO_VERTICAL_L 17
-#define BALAO_VERTICAL_H 14
-
-#define BALAO_VERTICAL_OFFSET_DIREITA 9
-#define BALAO_VERTICAL_OFFSET_CIMA 1
-
-#define QUADRO_L (QUADRO_TAM * (DADO_L + ESPACO_ENTRE_DADOS))
-#define QUADRO_H (QUADRO_TAM * (DADO_H + ESPACO_ENTRE_DADOS))
-
-#define BOTAO_ROTACIONAR_L 14
-#define BOTAO_ROTACIONAR_H 15
-
-#define BOTAO_HABILIDADE_L 16
-#define BOTAO_HABILIDADE_H 17
-
-#define FUNDO_PROGRESSO_L 3
-#define FUNDO_PROGRESSO_H 17
-
-#define PROGRESSO_OFFSET_DIREITA 2
-#define PROGRESSO_OFFSET_CIMA 15
-
-#define PROGRESSO_ALTURA 15
-
-#define ESCORE_OFFSET_CIMA 3
-#define TEMPO_OFFSET_CIMA 26
-
-#define QUADRO_OFFSET_DIREITA 24
-
-#define BOTAO_ROTACIONAR_OFFSET_DIREITA 8
-
 #define LARGURA_ORIGINAL 320
 #define ALTURA_ORIGINAL 180
-
-#define INICIO_TITULO_L 140
-#define INICIO_TITULO_H 32
 
 #define BORDA_DECORATIVA_L 24
 #define BORDA_DECORATIVA_H 11
 
 #define BOTAO_VOLTAR_L 22
 #define BOTAO_VOLTAR_H 18
+
+#define INICIO_TITULO_L 140
+#define INICIO_TITULO_H 32
 
 #define INICIO_BOTAO_MENU_L 70
 #define INICIO_BOTAO_MENU_H 23
@@ -126,23 +49,102 @@
 #define PLACAR_TITULO_L 80
 #define PLACAR_TITULO_H 14
 
+#define BOTAO_HABILIDADE_L 16
+#define BOTAO_HABILIDADE_H 17
+
+#define FUNDO_PROGRESSO_L 3
+#define FUNDO_PROGRESSO_H 17
+
+#define DADO_L 24
+#define DADO_H 25
+
+#define SLOT_L 51
+#define SLOT_H 53
+
+#define BOTAO_ROTACIONAR_L 14
+#define BOTAO_ROTACIONAR_H 15
+
+#define QUADRO_L (QUADRO_TAM * (DADO_L + DADOS_ESPACO))
+#define QUADRO_H (QUADRO_TAM * (DADO_H + DADOS_ESPACO))
+
+#define BALAO_HORIZONTAL_L 19
+#define BALAO_HORIZONTAL_H 11
+
+#define BALAO_VERTICAL_L 17
+#define BALAO_VERTICAL_H 14
+
 #define MARGEM_PEQUENA 8
 #define MARGEM_MEDIA 16
 #define MARGEM_GRANDE 24
 
+#define INICIO_BOTOES_ESPACO 2
+
+#define HABILIDADE_PROGRESSO_ESPACO 2
+#define HABILIDADE_QUANTIDADE_ESPACO 4
+
+#define HABILIDADES_ESPACO 4
+
+#define DADOS_ESPACO 1
+#define BALAO_ESPACO 1
+#define SLOTS_ESPACO 1
+
 #define BOTAO_VOLTAR_OFFSET_CIMA 14
 
-#define INICIO_ESPACO_ENTRE_BOTOES 2
 #define INICIO_BOTOES_OFFSET_CIMA (MARGEM_MEDIA + INICIO_TITULO_H + 20)
+
+#define HABILIDADE_PROGRESSO_ALTURA 15
+
+#define HABILIDADE_PROGRESSO_OFFSET_DIREITA 2
+#define HABILIDADE_PROGRESSO_OFFSET_CIMA 15
+
+#define QUADRO_OFFSET_DIREITA 24
+
+#define BALAO_HORIZONTAL_OFFSET_DIREITA 1
+#define BALAO_HORIZONTAL_OFFSET_CIMA 12
+
+#define BALAO_VERTICAL_OFFSET_DIREITA 9
+#define BALAO_VERTICAL_OFFSET_CIMA 1
+
+#define BOTAO_ROTACIONAR_OFFSET_DIREITA 8
+
+#define ESCORE_OFFSET_CIMA 3
+#define TEMPO_OFFSET_CIMA 26
+
+#define BALAO_0_LIMITE 6
+#define BALAO_1_LIMITE 9
+#define BALAO_2_LIMITE 10
 
 #define CENA_INICIO 0
 #define CENA_PLACAR 1
 #define CENA_AJUDA 2
 #define CENA_JOGO 3
 
+#define DIRECAO_LINHA 0
+#define DIRECAO_COLUNA 1
+
+#define DIRECOES_NUM 2
+
+#define ANIMACAO_PARADO 0
+#define ANIMACAO_COLAPSO 1
+#define ANIMACAO_EXPLOSAO 2
+
+#define PONTOS_DADO 1
+#define PONTOS_COMBO 5
+#define PONTOS_MULTILINHA 7
+#define PONTOS_TABULEIRO_CONCLUIDO 10
+
+#define DESFAZER_TABULEIROS_CONCLUIDOS 1
+#define BOMBA_COMBINACOES 5
+#define ROTACAO_PONTOS 50
+
 #define COR_PRETO al_map_rgb(0, 0, 0)
 #define COR_BRANCO al_map_rgb(255, 255, 255)
 #define COR_PROGRESSO al_map_rgb(121, 240, 8)
+
+#define DADO_VAZIO -1
+
+#define PERIODO_TICK (1.0 / 60.0)
+
 
 struct Fontes {
 	ALLEGRO_FONT *fipps_12;
@@ -413,7 +415,7 @@ void carregar_sprites(struct Sprites *sprites)
 	sprites->inicio_botao_ajuda_padrao = recortar_sprite(sprites, 70, 274, INICIO_BOTAO_MARCADOR_L, INICIO_BOTAO_MARCADOR_H);
 	sprites->inicio_botao_ajuda_sobre = recortar_sprite(sprites, 93, 274, INICIO_BOTAO_MARCADOR_L, INICIO_BOTAO_MARCADOR_H);
 
-	sprites->placar_titulo = recortar_sprite(sprites, 0, 300, PLACAR_TITULO_L, PLACAR_TITULO_H);
+	sprites->placar_titulo = recortar_sprite(sprites, 0, 301, PLACAR_TITULO_L, PLACAR_TITULO_H);
 
 	sprites->moldura = recortar_sprite(sprites, 168, 0, DADO_L, DADO_H);
 	sprites->slot = recortar_sprite(sprites, 168, 25, SLOT_L, SLOT_H);
@@ -487,24 +489,79 @@ bool colisao_retangulo(int x, int y, int largura, int altura, int px, int py)
 	return colisao_area(x, y, x + largura, y + altura, px, py);
 }
 
-
-
-void inicializar_botao(struct Botao *botao, int largura, int altura)
+void criar_display(struct Tela *tela)
 {
-	botao->x = 0;
-	botao->y = 0;
+	if (tela->cheia)
+	{
+		al_set_new_display_flags(ALLEGRO_FULLSCREEN_WINDOW);
+	}
+	else
+	{
+		al_set_new_display_flags(ALLEGRO_WINDOWED | ALLEGRO_RESIZABLE | ALLEGRO_MAXIMIZED);
+	}
 
-	botao->largura = largura;
-	botao->altura = altura;
+	tela->display = al_create_display(1280, 720);
+	verificar_init(tela->display, "display");
+}
 
-	botao->desabilitado = false;
-	botao->sobre = false;
-	botao->pressionado = false;
+void criar_canvas(struct Tela *tela)
+{
+	float largura_janela = al_get_display_width(tela->display);
+	float altura_janela = al_get_display_height(tela->display);
 
-	botao->sprite_padrao = NULL;
-	botao->sprite_sobre = NULL;
-	botao->sprite_pressionado = NULL;
-	botao->sprite_desabilitado = NULL;
+	float razao_x = floor(largura_janela / LARGURA_ORIGINAL);
+	float razao_y = floor(altura_janela / ALTURA_ORIGINAL);
+
+	tela->escala = razao_x < razao_y ? razao_x : razao_y;
+
+	if (tela->escala < 1)
+	{
+		tela->escala = 1;
+	}
+
+	tela->largura = largura_janela / tela->escala;
+	tela->altura = altura_janela / tela->escala;
+
+	tela->canvas = al_create_bitmap(tela->largura, tela->altura);
+	verificar_init(tela->canvas, "canvas");
+}
+
+void alternar_tela_cheia(struct Tela *tela)
+{
+	tela->cheia = !tela->cheia;
+
+	al_destroy_display(tela->display);
+	criar_display(tela);
+}
+
+void redimensionar_canvas(struct Tela *tela)
+{
+	al_destroy_bitmap(tela->canvas);
+	criar_canvas(tela);
+}
+
+void preparar_desenho(struct Tela *tela)
+{
+	al_set_target_bitmap(tela->canvas);
+	al_clear_to_color(al_map_rgba(0, 0, 0, 0));
+}
+
+void finalizar_desenho(struct Tela *tela)
+{
+	al_set_target_backbuffer(tela->display);
+	al_clear_to_color(COR_BRANCO);
+	al_draw_scaled_bitmap(tela->canvas, 0, 0, tela->largura, tela->altura, 0, 0, tela->largura * tela->escala, tela->altura * tela->escala, 0);
+	al_flip_display();
+}
+
+void transicionar_para_cena(struct Sistema *sistema, int cena)
+{
+	sistema->cena = cena;
+}
+
+void detectar_sobreposicao_botao(struct Botao *botao, int px, int py)
+{
+	botao->sobre = colisao_retangulo(botao->x, botao->y, botao->largura, botao->altura, px, py);
 }
 
 bool pressionar_botao(struct Botao *botao)
@@ -528,9 +585,22 @@ bool soltar_botao(struct Botao *botao)
 	return false;
 }
 
-void detectar_sobreposicao_botao(struct Botao *botao, int px, int py)
+void inicializar_botao(struct Botao *botao, int largura, int altura)
 {
-	botao->sobre = colisao_retangulo(botao->x, botao->y, botao->largura, botao->altura, px, py);
+	botao->x = 0;
+	botao->y = 0;
+
+	botao->largura = largura;
+	botao->altura = altura;
+
+	botao->desabilitado = false;
+	botao->sobre = false;
+	botao->pressionado = false;
+
+	botao->sprite_padrao = NULL;
+	botao->sprite_sobre = NULL;
+	botao->sprite_pressionado = NULL;
+	botao->sprite_desabilitado = NULL;
 }
 
 void desenhar_botao(struct Botao *botao)
@@ -555,27 +625,6 @@ void desenhar_botao(struct Botao *botao)
 	}
 
 	al_draw_bitmap(sprite, botao->x, botao->y, 0);
-}
-
-void posicionar_habilidade(struct Habilidade *habilidade, int x, int y)
-{
-	habilidade->x = x;
-	habilidade->y = y;
-	habilidade->botao.x = x + FUNDO_PROGRESSO_L + ESPACO_PROGRESSO_HABILIDADE;
-	habilidade->botao.y = y;
-}
-
-void inicializar_habilidade(struct Habilidade *habilidade, int custo, bool cumulativo)
-{
-	habilidade->custo = custo;
-	habilidade->cumulativo = cumulativo;
-
-	habilidade->bloqueado = false;
-
-	habilidade->quantidade = 0;
-	habilidade->progresso = 0;
-
-	inicializar_botao(&habilidade->botao, BOTAO_HABILIDADE_L, BOTAO_HABILIDADE_H);
 }
 
 void acumular_habilidade(struct Habilidade *habilidade, int parte)
@@ -619,126 +668,59 @@ bool usar_habilidade(struct Habilidade *habilidade)
 	return false;
 }
 
+void inicializar_habilidade(struct Habilidade *habilidade, int custo, bool cumulativo)
+{
+	habilidade->custo = custo;
+	habilidade->cumulativo = cumulativo;
+
+	habilidade->bloqueado = false;
+
+	habilidade->quantidade = 0;
+	habilidade->progresso = 0;
+
+	inicializar_botao(&habilidade->botao, BOTAO_HABILIDADE_L, BOTAO_HABILIDADE_H);
+}
+
+void posicionar_habilidade(struct Habilidade *habilidade, int x, int y)
+{
+	habilidade->x = x;
+	habilidade->y = y;
+	habilidade->botao.x = x + FUNDO_PROGRESSO_L + HABILIDADE_PROGRESSO_ESPACO;
+	habilidade->botao.y = y;
+}
+
 void atualizar_habilidade(struct Habilidade *habilidade)
 {
 	habilidade->botao.desabilitado = !pode_usar_habilidade(habilidade);
 }
 
-void desenhar_habilidade(struct Tela *tela, struct Habilidade *habilidade)
+void desenhar_habilidade(struct Habilidade *habilidade, struct Tela *tela)
 {
 	float porcentagem = (float)habilidade->progresso / habilidade->custo;
-	int altura = porcentagem * PROGRESSO_ALTURA;
+	int altura = porcentagem * HABILIDADE_PROGRESSO_ALTURA;
 
-	int progresso_x = habilidade->x + PROGRESSO_OFFSET_DIREITA;
+	int progresso_x = habilidade->x + HABILIDADE_PROGRESSO_OFFSET_DIREITA;
 
-	int progresso_y1 = habilidade->y + PROGRESSO_OFFSET_CIMA + 1;
+	int progresso_y1 = habilidade->y + HABILIDADE_PROGRESSO_OFFSET_CIMA + 1;
 	int progresso_y2 = progresso_y1 - altura;
 
-	int quantidade_x = habilidade->botao.x + BOTAO_HABILIDADE_L + ESPACO_QUANTIDADE_HABILIDADE;
+	int quantidade_x = habilidade->botao.x + BOTAO_HABILIDADE_L + HABILIDADE_QUANTIDADE_ESPACO;
 	int quantidade_y = centro(habilidade->botao.y, BOTAO_HABILIDADE_H, al_get_font_line_height(tela->fontes.pixelmix_8));
 
 	al_draw_bitmap(tela->sprites.fundo_progresso, habilidade->x, habilidade->y, 0);
 	al_draw_line(progresso_x, progresso_y1, progresso_x, progresso_y2, COR_PROGRESSO, 1);
 
 	if (habilidade->cumulativo)
+	{
 		al_draw_textf(tela->fontes.pixelmix_8, COR_PRETO, quantidade_x, quantidade_y, ALLEGRO_ALIGN_LEFT, "%d", habilidade->quantidade);
+	}
 
 	desenhar_botao(&habilidade->botao);
-}
-
-void inicializar_desfazer(struct Sprites *sprites, struct Habilidade *desfazer)
-{
-	inicializar_habilidade(desfazer, DESFAZER_TABULEIROS_CONCLUIDOS, false);
-
-	desfazer->bloqueado = true;
-
-	desfazer->botao.sprite_padrao = sprites->habilidade_desfazer_padrao;
-	desfazer->botao.sprite_sobre = sprites->habilidade_desfazer_padrao;
-	desfazer->botao.sprite_pressionado = sprites->habilidade_desfazer_pressionado;
-	desfazer->botao.sprite_desabilitado = sprites->habilidade_desfazer_desabilitado;
-}
-
-void inicializar_bomba(struct Sprites *sprites, struct Habilidade *bomba)
-{
-	inicializar_habilidade(bomba, BOMBA_COMBINACOES, true);
-
-	bomba->botao.sprite_padrao = sprites->habilidade_bomba_padrao;
-	bomba->botao.sprite_sobre = sprites->habilidade_bomba_padrao;
-	bomba->botao.sprite_pressionado = sprites->habilidade_bomba_pressionado;
-	bomba->botao.sprite_desabilitado = sprites->habilidade_bomba_desabilitado;
-}
-
-void inicializar_rotacao(struct Sprites *sprites, struct Habilidade *rotacao)
-{
-	inicializar_habilidade(rotacao, ROTACAO_PONTOS, true);
-
-	rotacao->botao.sprite_padrao = sprites->habilidade_rotacao_padrao;
-	rotacao->botao.sprite_sobre = sprites->habilidade_rotacao_padrao;
-	rotacao->botao.sprite_pressionado = sprites->habilidade_rotacao_padrao;
-	rotacao->botao.sprite_desabilitado = sprites->habilidade_rotacao_padrao;
-}
-
-void posicionar_habilidades(struct Tela *tela, struct Jogo *jogo)
-{
-	int espaco_y = BOTAO_HABILIDADE_H + ESPACO_ENTRE_HABILIDADES;
-
-	int x = MARGEM_PEQUENA;
-	int y = tela->altura - MARGEM_PEQUENA - BOTAO_HABILIDADE_H;
-
-	posicionar_habilidade(&jogo->rotacao, x, y);
-
-	y -= espaco_y;
-	posicionar_habilidade(&jogo->bomba, x, y);
-
-	y -= espaco_y;
-	posicionar_habilidade(&jogo->desfazer, x, y);
-}
-
-void incrementar_score(struct Jogo *jogo, int pontos)
-{
-	jogo->escore += pontos;
-	acumular_habilidade(&jogo->rotacao, pontos);
-}
-
-void pontuar_dado(struct Jogo *jogo)
-{
-	incrementar_score(jogo, PONTOS_DADO);
-}
-
-void pontuar_tabuleiro_concluido(struct Jogo *jogo)
-{
-	acumular_habilidade(&jogo->desfazer, 1);
-	incrementar_score(jogo, PONTOS_TABULEIRO_CONCLUIDO);
-}
-
-void pontuar_multilinha(struct Jogo *jogo, int linhas)
-{
-	acumular_habilidade(&jogo->bomba, 1);
-	incrementar_score(jogo, PONTOS_MULTILINHA * (linhas - 1));
-}
-
-void pontuar_combo(struct Jogo *jogo, int linhas)
-{
-	if (jogo->combo == 1)
-		acumular_habilidade(&jogo->bomba, 1);
-
-	incrementar_score(jogo, PONTOS_COMBO * linhas);
-}
-
-void resetar_combo(struct Jogo *jogo)
-{
-	jogo->combo = 1;
 }
 
 bool colisao_quadro(struct Quadro *quadro, int px, int py)
 {
 	return colisao_retangulo(quadro->x, quadro->y, QUADRO_L, QUADRO_H, px, py);
-}
-
-void posicionar_quadro(struct Tela *tela, struct Quadro *quadro)
-{
-	quadro->x = centro(0, tela->largura, QUADRO_L) - QUADRO_OFFSET_DIREITA;
-	quadro->y = tela->altura - QUADRO_H - MARGEM_PEQUENA;
 }
 
 void remover_dado(struct Quadro *quadro, int linha, int coluna)
@@ -768,22 +750,14 @@ void animar_dado(struct Dado *dado, int animacao, int atraso, int direcao)
 	dado->direcao = direcao;
 }
 
-bool verificar_colapso(struct Dado *dado)
-{
-	return dado->animacao == ANIMACAO_COLAPSO && dado->ticks - dado->atraso >= COLAPSO_FRAME_PERIODO * COLAPSO_FRAMES_NUM;
-}
-
-bool verificar_explosao(struct Dado *dado)
-{
-	return dado->animacao == ANIMACAO_EXPLOSAO;
-}
-
 bool linha_destruida(struct Quadro *quadro, int linha)
 {
 	for (int j = 0; j < QUADRO_TAM; j++)
 	{
 		if (quadro->dados[linha][j].animacao == ANIMACAO_COLAPSO)
+		{
 			return true;
+		}
 	}
 
 	return false;
@@ -794,7 +768,9 @@ bool coluna_destruida(struct Quadro *quadro, int coluna)
 	for (int i = 0; i < QUADRO_TAM; i++)
 	{
 		if (quadro->dados[i][coluna].animacao == ANIMACAO_COLAPSO)
+		{
 			return true;
+		}
 	}
 
 	return false;
@@ -903,16 +879,40 @@ bool restaurar_quadro_concluido(struct Quadro *quadro)
 	return false;
 }
 
+bool verificar_colapso(struct Dado *dado)
+{
+	return dado->animacao == ANIMACAO_COLAPSO && dado->ticks - dado->atraso >= COLAPSO_FRAME_PERIODO * COLAPSO_FRAMES_NUM;
+}
+
+bool verificar_explosao(struct Dado *dado)
+{
+	return dado->animacao == ANIMACAO_EXPLOSAO;
+}
+
 int determinar_balao(int soma)
 {
-	if (soma <= LIMITE_BALAO_0)
+	if (soma <= BALAO_0_LIMITE)
+	{
 		return 0;
-	else if (soma <= LIMITE_BALAO_1)
+	}
+	else if (soma <= BALAO_1_LIMITE)
+	{
 		return 1;
-	else if (soma <= LIMITE_BALAO_2)
+	}
+	else if (soma <= BALAO_2_LIMITE)
+	{
 		return 2;
+	}
 	else
+	{
 		return 3;
+	}
+}
+
+void posicionar_quadro(struct Quadro *quadro, struct Tela *tela)
+{
+	quadro->x = centro(0, tela->largura, QUADRO_L) - QUADRO_OFFSET_DIREITA;
+	quadro->y = tela->altura - QUADRO_H - MARGEM_PEQUENA;
 }
 
 void inicializar_quadro(struct Quadro *quadro)
@@ -938,38 +938,12 @@ void inicializar_quadro(struct Quadro *quadro)
 	}
 }
 
-void desenhar_quadro(struct Tela *tela, struct Quadro *quadro)
+void desenhar_baloes_horizontais(struct Quadro *quadro, struct Tela *tela)
 {
 	for (int i = 0; i < QUADRO_TAM; i++)
 	{
-		for (int j = 0; j < QUADRO_TAM; j++)
-		{
-			struct Dado *dado = &quadro->dados[i][j];
-
-			int dado_x = quadro->x + j * (DADO_L + ESPACO_ENTRE_DADOS);
-			int dado_y = quadro->y + i * (DADO_H + ESPACO_ENTRE_DADOS);
-
-			al_draw_bitmap(tela->sprites.moldura, dado_x, dado_y, 0);
-
-			if (dado->valor != DADO_VAZIO)
-				al_draw_bitmap(tela->sprites.dados[dado->cor][dado->valor], dado_x, dado_y, 0);
-
-			if (dado->animacao == ANIMACAO_COLAPSO && dado->ticks > dado->atraso)
-			{
-				int frame = ((dado->ticks - dado->atraso) / COLAPSO_FRAME_PERIODO) % COLAPSO_FRAMES_NUM;
-
-				if (dado->direcao == DIRECAO_LINHA)
-					al_draw_bitmap(tela->sprites.colapso_linha[frame], dado_x, dado_y, 0);
-				else
-					al_draw_bitmap(tela->sprites.colapso_coluna[frame], dado_x, dado_y, 0);
-			}
-		}
-	}
-
-	for (int i = 0; i < QUADRO_TAM; i++)
-	{
-		int x = quadro->x + QUADRO_L + ESPACO_BALAO;
-		int y = centro(quadro->y + i * (DADO_H + ESPACO_ENTRE_DADOS), DADO_H, BALAO_HORIZONTAL_H);
+		int x = quadro->x + QUADRO_L + BALAO_ESPACO;
+		int y = centro(quadro->y + i * (DADO_H + DADOS_ESPACO), DADO_H, BALAO_HORIZONTAL_H);
 
 		int texto_x = x + BALAO_HORIZONTAL_OFFSET_CIMA;
 		int texto_y = y + BALAO_HORIZONTAL_OFFSET_DIREITA;
@@ -980,11 +954,14 @@ void desenhar_quadro(struct Tela *tela, struct Quadro *quadro)
 		al_draw_bitmap(tela->sprites.baloes_horizontais[balao], x, y, 0);
 		al_draw_textf(tela->fontes.pixelmix_8, COR_BRANCO, texto_x, texto_y, ALLEGRO_ALIGN_CENTER, "%d", soma);
 	}
+}
 
+void desenhar_baloes_verticais(struct Quadro *quadro, struct Tela *tela)
+{
 	for (int j = 0; j < QUADRO_TAM; j++)
 	{
-		int x = centro(quadro->x + j * (DADO_L + ESPACO_ENTRE_DADOS), DADO_L, BALAO_VERTICAL_L);
-		int y = quadro->y - ESPACO_BALAO - BALAO_VERTICAL_H;
+		int x = centro(quadro->x + j * (DADO_L + DADOS_ESPACO), DADO_L, BALAO_VERTICAL_L);
+		int y = quadro->y - BALAO_ESPACO - BALAO_VERTICAL_H;
 
 		int texto_x = x + BALAO_VERTICAL_OFFSET_DIREITA;
 		int texto_y = y + BALAO_VERTICAL_OFFSET_CIMA;
@@ -997,14 +974,60 @@ void desenhar_quadro(struct Tela *tela, struct Quadro *quadro)
 	}
 }
 
+void desenhar_quadro(struct Quadro *quadro, struct Tela *tela)
+{
+	for (int i = 0; i < QUADRO_TAM; i++)
+	{
+		for (int j = 0; j < QUADRO_TAM; j++)
+		{
+			struct Dado *dado = &quadro->dados[i][j];
+
+			int dado_x = quadro->x + j * (DADO_L + DADOS_ESPACO);
+			int dado_y = quadro->y + i * (DADO_H + DADOS_ESPACO);
+
+			al_draw_bitmap(tela->sprites.moldura, dado_x, dado_y, 0);
+
+			if (dado->valor != DADO_VAZIO)
+			{
+				al_draw_bitmap(tela->sprites.dados[dado->cor][dado->valor], dado_x, dado_y, 0);
+			}
+
+			if (dado->animacao == ANIMACAO_COLAPSO && dado->ticks > dado->atraso)
+			{
+				int frame = ((dado->ticks - dado->atraso) / COLAPSO_FRAME_PERIODO) % COLAPSO_FRAMES_NUM;
+
+				if (dado->direcao == DIRECAO_LINHA)
+				{
+					al_draw_bitmap(tela->sprites.colapso_linha[frame], dado_x, dado_y, 0);
+				}
+				else
+				{
+					al_draw_bitmap(tela->sprites.colapso_coluna[frame], dado_x, dado_y, 0);
+				}
+			}
+		}
+	}
+
+	desenhar_baloes_horizontais(quadro, tela);
+	desenhar_baloes_verticais(quadro, tela);
+}
+
+void desenhar_borda_decorativa(struct Tela *tela)
+{
+	for (int i = 0; i * BORDA_DECORATIVA_L < tela->largura; i++)
+	{
+		al_draw_bitmap(tela->sprites.borda_decorativa, i * BORDA_DECORATIVA_L, tela->altura - BORDA_DECORATIVA_H, 0);
+	}
+}
+
 int largura_peca(struct Peca *peca)
 {
-	return DADO_L * peca->colunas + ESPACO_ENTRE_DADOS * (peca->colunas - 1);
+	return DADO_L * peca->colunas + DADOS_ESPACO * (peca->colunas - 1);
 }
 
 int altura_peca(struct Peca *peca)
 {
-	return DADO_H * peca->linhas + ESPACO_ENTRE_DADOS * (peca->linhas - 1);
+	return DADO_H * peca->linhas + DADOS_ESPACO * (peca->linhas - 1);
 }
 
 struct Peca gerar_peca(int x, int y)
@@ -1113,14 +1136,14 @@ void retirar_peca(struct Quadro *quadro, struct Peca *peca, int linha, int colun
 	}
 }
 
-void desenhar_peca(struct Tela *tela, struct Peca *peca)
+void desenhar_peca(struct Peca *peca, struct Tela *tela)
 {
 	for (int i = 0; i < peca->linhas; i++)
 	{
 		for (int j = 0; j < peca->colunas; j++)
 		{
-			int dado_x = peca->x + j * (DADO_L + ESPACO_ENTRE_DADOS);
-			int dado_y = peca->y + i * (DADO_H + ESPACO_ENTRE_DADOS);
+			int dado_x = peca->x + j * (DADO_L + DADOS_ESPACO);
+			int dado_y = peca->y + i * (DADO_H + DADOS_ESPACO);
 
 			if (peca->dados[i][j] != DADO_VAZIO)
 			{
@@ -1135,28 +1158,10 @@ bool colisao_slot(struct Slot *slot, int x, int y)
 	return colisao_retangulo(slot->x, slot->y, SLOT_L, SLOT_H, x, y);
 }
 
-void posicionar_slots(struct Tela *tela, struct Slot slots[SLOTS_TAM])
-{
-	for (int i = 0; i < SLOTS_TAM; i++)
-	{
-		slots[i].x = tela->largura - SLOT_L - MARGEM_PEQUENA;
-		slots[i].y = tela->altura - SLOT_H - MARGEM_PEQUENA - (SLOT_H + ESPACO_ENTRE_SLOTS) * i;
-
-		slots[i].botao_rotacionar.x = slots[i].x - BOTAO_ROTACIONAR_L - BOTAO_ROTACIONAR_OFFSET_DIREITA;
-		slots[i].botao_rotacionar.y = centro(slots[i].y, SLOT_H, BOTAO_ROTACIONAR_H);
-	}
-}
-
 void gerar_slot(struct Slot *slot)
 {
 	slot->ocupado = true;
 	slot->peca = gerar_peca(slot->peca.x, slot->peca.y);
-}
-
-void rotacionar_slot(struct Slot *slot)
-{
-	slot->rotacionando = true;
-	slot->peca = rotacionar_peca(&slot->peca);
 }
 
 void pegar_slot(struct Slot *slot, int x, int y)
@@ -1170,6 +1175,12 @@ void arrastar_slot(struct Slot *slot, int x, int y)
 {
 	slot->peca.x = slot->arraste_x + x;
 	slot->peca.y = slot->arraste_y + y;
+}
+
+void rotacionar_slot(struct Slot *slot)
+{
+	slot->rotacionando = true;
+	slot->peca = rotacionar_peca(&slot->peca);
 }
 
 bool aceita_slot(struct Quadro *quadro, struct Slot *slot, int linha, int coluna)
@@ -1194,8 +1205,8 @@ bool largar_slot(struct Quadro *quadro, struct Slot *slot, int *linha, int *colu
 
 	if (colisao_quadro(quadro, referencia_x, referencia_y))
 	{
-		*coluna = (referencia_x - quadro->x) / (DADO_L + ESPACO_ENTRE_DADOS);
-		*linha = (referencia_y - quadro->y) / (DADO_H + ESPACO_ENTRE_DADOS);
+		*coluna = (referencia_x - quadro->x) / (DADO_L + DADOS_ESPACO);
+		*linha = (referencia_y - quadro->y) / (DADO_H + DADOS_ESPACO);
 
 		if (aceita_slot(quadro, slot, *linha, *coluna))
 		{
@@ -1207,41 +1218,22 @@ bool largar_slot(struct Quadro *quadro, struct Slot *slot, int *linha, int *colu
 	return false;
 }
 
-bool slot_vazios(struct Slot slots[SLOTS_TAM])
+void inicializar_slot(struct Slot *slot, struct Sprites *sprites)
 {
-	for (int i = 0; i < SLOTS_TAM; i++)
-	{
-		if (slots[i].ocupado)
-			return false;
-	}
+	slot->x = 0;
+	slot->y = 0;
 
-	return true;
+	slot->ocupado = false;
+	slot->arrastando = false;
+	slot->rotacionando = false;
+
+	inicializar_botao(&slot->botao_rotacionar, BOTAO_ROTACIONAR_L, BOTAO_ROTACIONAR_H);
+
+	slot->botao_rotacionar.sprite_desabilitado = sprites->botao_rotacionar_desabilitado;
+	slot->botao_rotacionar.sprite_pressionado = sprites->botao_rotacionar_ativo_pressionado;
 }
 
-void gerar_slots(struct Slot slots[SLOTS_TAM])
-{
-	for (int i = 0; i < SLOTS_TAM; i++)
-	{
-		gerar_slot(&slots[i]);
-	}
-}
-
-void inicializar_slots(struct Sprites *sprites, struct Slot slots[SLOTS_TAM])
-{
-	for (int i = 0; i < SLOTS_TAM; i++)
-	{
-		slots[i].ocupado = false;
-		slots[i].arrastando = false;
-		slots[i].rotacionando = false;
-		
-		inicializar_botao(&slots[i].botao_rotacionar, BOTAO_ROTACIONAR_L, BOTAO_ROTACIONAR_H);
-
-		slots[i].botao_rotacionar.sprite_desabilitado = sprites->botao_rotacionar_desabilitado;
-		slots[i].botao_rotacionar.sprite_pressionado = sprites->botao_rotacionar_ativo_pressionado;
-	}
-}
-
-void desenhar_slot(struct Tela *tela, struct Slot *slot)
+void desenhar_slot(struct Slot *slot, struct Tela *tela)
 {
 	al_draw_bitmap(tela->sprites.slot, slot->x, slot->y, 0);
 
@@ -1260,19 +1252,112 @@ void desenhar_slot(struct Tela *tela, struct Slot *slot)
 
 	if (slot->ocupado && !slot->arrastando)
 	{
-		desenhar_peca(tela, &slot->peca);
+		desenhar_peca(&slot->peca, tela);
 	}
 }
 
-void desenhar_pontuacao(struct Tela *tela, struct Jogo *jogo)
+void gerar_slots(struct Slot slots[SLOTS_TAM])
 {
-	int total_segundos = jogo->tempo * PERIODO_TICK;
+	for (int i = 0; i < SLOTS_TAM; i++)
+	{
+		gerar_slot(&slots[i]);
+	}
+}
 
-	int minutos = total_segundos / 60;
-	int segundos = total_segundos % 60;
+bool slot_vazios(struct Slot slots[SLOTS_TAM])
+{
+	for (int i = 0; i < SLOTS_TAM; i++)
+	{
+		if (slots[i].ocupado)
+			return false;
+	}
 
-	al_draw_textf(tela->fontes.fipps_12, COR_PRETO, MARGEM_PEQUENA, ESCORE_OFFSET_CIMA, ALLEGRO_ALIGN_LEFT, "%03d", jogo->escore);
-	al_draw_textf(tela->fontes.pixelmix_8, COR_PRETO, MARGEM_PEQUENA, TEMPO_OFFSET_CIMA, ALLEGRO_ALIGN_LEFT, "%02d:%02d", minutos, segundos);
+	return true;
+}
+
+void inicializar_slots(struct Slot slots[SLOTS_TAM], struct Sprites *sprites)
+{
+	for (int i = 0; i < SLOTS_TAM; i++)
+	{
+		inicializar_slot(&slots[i], sprites);
+	}
+}
+
+void posicionar_slots(struct Slot slots[SLOTS_TAM], struct Tela *tela)
+{
+	for (int i = 0; i < SLOTS_TAM; i++)
+	{
+		slots[i].x = tela->largura - SLOT_L - MARGEM_PEQUENA;
+		slots[i].y = tela->altura - SLOT_H - MARGEM_PEQUENA - (SLOT_H + SLOTS_ESPACO) * i;
+
+		slots[i].botao_rotacionar.x = slots[i].x - BOTAO_ROTACIONAR_L - BOTAO_ROTACIONAR_OFFSET_DIREITA;
+		slots[i].botao_rotacionar.y = centro(slots[i].y, SLOT_H, BOTAO_ROTACIONAR_H);
+	}
+}
+
+void desenhar_slots(struct Slot slots[SLOTS_TAM], struct Tela *tela)
+{
+	for (int i = 0; i < SLOTS_TAM; i++)
+	{
+		desenhar_slot(&slots[i], tela);
+	}
+}
+
+void incrementar_score(struct Jogo *jogo, int pontos)
+{
+	jogo->escore += pontos;
+	acumular_habilidade(&jogo->rotacao, pontos);
+}
+
+void pontuar_dado(struct Jogo *jogo)
+{
+	incrementar_score(jogo, PONTOS_DADO);
+}
+
+void pontuar_tabuleiro_concluido(struct Jogo *jogo)
+{
+	acumular_habilidade(&jogo->desfazer, 1);
+	incrementar_score(jogo, PONTOS_TABULEIRO_CONCLUIDO);
+}
+
+void pontuar_multilinha(struct Jogo *jogo, int linhas)
+{
+	acumular_habilidade(&jogo->bomba, 1);
+	incrementar_score(jogo, PONTOS_MULTILINHA * (linhas - 1));
+}
+
+void pontuar_combo(struct Jogo *jogo, int linhas)
+{
+	if (jogo->combo == 1)
+		acumular_habilidade(&jogo->bomba, 1);
+
+	incrementar_score(jogo, PONTOS_COMBO * linhas);
+}
+
+void resetar_combo(struct Jogo *jogo)
+{
+	jogo->combo = 1;
+}
+
+void registrar_jogada(struct Jogo *jogo, int slot_origem, int linha, int coluna)
+{
+	jogo->desfazer.bloqueado = false;
+
+	jogo->jogada.indice_origem = slot_origem;
+	jogo->jogada.linha = linha;
+	jogo->jogada.coluna = coluna;
+	jogo->jogada.peca = jogo->slots[slot_origem].peca;
+}
+
+void desfazer_jogada(struct Jogo *jogo)
+{
+	jogo->desfazer.bloqueado = true;
+
+	retirar_peca(&jogo->quadro, &jogo->jogada.peca, jogo->jogada.linha, jogo->jogada.coluna);
+	restaurar_quadro_concluido(&jogo->quadro);
+
+	jogo->slots[jogo->jogada.indice_origem].ocupado = true;
+	jogo->slots[jogo->jogada.indice_origem].peca = jogo->jogada.peca;
 }
 
 void analisar_tabuleiro_concluido(struct Jogo *jogo)
@@ -1298,27 +1383,6 @@ void analisar_consequencias(struct Jogo *jogo)
 	}
 
 	resetar_combo(jogo);
-}
-
-void registrar_jogada(struct Jogo *jogo, int slot_origem, int linha, int coluna)
-{
-	jogo->desfazer.bloqueado = false;
-
-	jogo->jogada.indice_origem = slot_origem;
-	jogo->jogada.linha = linha;
-	jogo->jogada.coluna = coluna;
-	jogo->jogada.peca = jogo->slots[slot_origem].peca;
-}
-
-void desfazer_jogada(struct Jogo *jogo)
-{
-	jogo->desfazer.bloqueado = true;
-
-	retirar_peca(&jogo->quadro, &jogo->jogada.peca, jogo->jogada.linha, jogo->jogada.coluna);
-	restaurar_quadro_concluido(&jogo->quadro);
-
-	jogo->slots[jogo->jogada.indice_origem].ocupado = true;
-	jogo->slots[jogo->jogada.indice_origem].peca = jogo->jogada.peca;
 }
 
 void usar_desfazer(struct Jogo *jogo)
@@ -1360,6 +1424,79 @@ void usar_rotacao(struct Jogo *jogo, struct Slot *slot)
 	{
 		rotacionar_slot(slot);
 	}
+}
+
+void inicializar_desfazer(struct Habilidade *desfazer, struct Sprites *sprites)
+{
+	inicializar_habilidade(desfazer, DESFAZER_TABULEIROS_CONCLUIDOS, false);
+
+	desfazer->bloqueado = true;
+
+	desfazer->botao.sprite_padrao = sprites->habilidade_desfazer_padrao;
+	desfazer->botao.sprite_sobre = sprites->habilidade_desfazer_padrao;
+	desfazer->botao.sprite_pressionado = sprites->habilidade_desfazer_pressionado;
+	desfazer->botao.sprite_desabilitado = sprites->habilidade_desfazer_desabilitado;
+}
+
+void inicializar_bomba(struct Habilidade *bomba, struct Sprites *sprites)
+{
+	inicializar_habilidade(bomba, BOMBA_COMBINACOES, true);
+
+	bomba->botao.sprite_padrao = sprites->habilidade_bomba_padrao;
+	bomba->botao.sprite_sobre = sprites->habilidade_bomba_padrao;
+	bomba->botao.sprite_pressionado = sprites->habilidade_bomba_pressionado;
+	bomba->botao.sprite_desabilitado = sprites->habilidade_bomba_desabilitado;
+}
+
+void inicializar_rotacao(struct Habilidade *rotacao, struct Sprites *sprites)
+{
+	inicializar_habilidade(rotacao, ROTACAO_PONTOS, true);
+
+	rotacao->botao.sprite_padrao = sprites->habilidade_rotacao_padrao;
+	rotacao->botao.sprite_sobre = sprites->habilidade_rotacao_padrao;
+	rotacao->botao.sprite_pressionado = sprites->habilidade_rotacao_padrao;
+	rotacao->botao.sprite_desabilitado = sprites->habilidade_rotacao_padrao;
+}
+
+void inicializar_habilidades(struct Jogo *jogo, struct Sprites *sprites)
+{
+	inicializar_desfazer(&jogo->desfazer, sprites);
+	inicializar_bomba(&jogo->bomba, sprites);
+	inicializar_rotacao(&jogo->rotacao, sprites);
+}
+
+void posicionar_habilidades(struct Jogo *jogo, struct Tela *tela)
+{
+	int espaco_y = BOTAO_HABILIDADE_H + HABILIDADES_ESPACO;
+
+	int x = MARGEM_PEQUENA;
+	int y = tela->altura - MARGEM_PEQUENA - BOTAO_HABILIDADE_H;
+
+	posicionar_habilidade(&jogo->rotacao, x, y);
+
+	y -= espaco_y;
+	posicionar_habilidade(&jogo->bomba, x, y);
+
+	y -= espaco_y;
+	posicionar_habilidade(&jogo->desfazer, x, y);
+}
+
+void desenhar_habilidades(struct Jogo *jogo, struct Tela *tela)
+{
+	desenhar_habilidade(&jogo->rotacao, tela);
+	desenhar_habilidade(&jogo->bomba, tela);
+	desenhar_habilidade(&jogo->desfazer, tela);
+}
+
+void desenhar_pontuacao(struct Jogo *jogo, struct Tela *tela)
+{
+	int total_segundos = jogo->tempo * PERIODO_TICK;
+
+	int minutos = total_segundos / 60;
+	int segundos = total_segundos % 60;
+
+	al_draw_textf(tela->fontes.fipps_12, COR_PRETO, MARGEM_PEQUENA, ESCORE_OFFSET_CIMA, ALLEGRO_ALIGN_LEFT, "%03d", jogo->escore);
+	al_draw_textf(tela->fontes.pixelmix_8, COR_PRETO, MARGEM_PEQUENA, TEMPO_OFFSET_CIMA, ALLEGRO_ALIGN_LEFT, "%02d:%02d", minutos, segundos);
 }
 
 void atualizar_slots(struct Jogo *jogo)
@@ -1425,86 +1562,6 @@ void atualizar_quadro(struct Jogo *jogo)
 	}
 }
 
-void criar_display(struct Tela *tela)
-{
-	if (tela->cheia)
-	{
-		al_set_new_display_flags(ALLEGRO_FULLSCREEN_WINDOW);
-	}
-	else
-	{
-		al_set_new_display_flags(ALLEGRO_WINDOWED | ALLEGRO_RESIZABLE | ALLEGRO_MAXIMIZED);
-	}
-
-	tela->display = al_create_display(1280, 720);
-	verificar_init(tela->display, "display");
-}
-
-void criar_canvas(struct Tela *tela)
-{
-	ALLEGRO_TRANSFORM transform;
-
-	float largura_janela = al_get_display_width(tela->display);
-	float altura_janela = al_get_display_height(tela->display);
-
-	float razao_x = floor(largura_janela / LARGURA_ORIGINAL);
-	float razao_y = floor(altura_janela / ALTURA_ORIGINAL);
-
-	tela->escala = razao_x < razao_y ? razao_x : razao_y;
-
-	if (tela->escala < 1)
-	{
-		tela->escala = 1;
-	}
-
-	tela->largura = largura_janela / tela->escala;
-	tela->altura = altura_janela / tela->escala;
-
-	tela->canvas = al_create_bitmap(tela->largura, tela->altura);
-	verificar_init(tela->canvas, "canvas");
-}
-
-void alternar_tela_cheia(struct Tela *tela)
-{
-	tela->cheia = !tela->cheia;
-
-	al_destroy_display(tela->display);
-	criar_display(tela);
-}
-
-void redimensionar_canvas(struct Tela *tela)
-{
-	al_destroy_bitmap(tela->canvas);
-	criar_canvas(tela);
-}
-
-void preparar_desenho(struct Tela *tela)
-{
-	al_set_target_bitmap(tela->canvas);
-	al_clear_to_color(al_map_rgba(0, 0, 0, 0));
-}
-
-void finalizar_desenho(struct Tela *tela)
-{
-	al_set_target_backbuffer(tela->display);
-	al_clear_to_color(COR_BRANCO);
-	al_draw_scaled_bitmap(tela->canvas, 0, 0, tela->largura, tela->altura, 0, 0, tela->largura * tela->escala, tela->altura * tela->escala, 0);
-	al_flip_display();
-}
-
-void transicionar_para_cena(struct Sistema *sistema, int cena)
-{
-	sistema->cena = cena;
-}
-
-void desenhar_borda_decorativa(struct Tela *tela)
-{
-	for (int i = 0; i * BORDA_DECORATIVA_L < tela->largura; i++)
-	{
-		al_draw_bitmap(tela->sprites.borda_decorativa, i * BORDA_DECORATIVA_L, tela->altura - BORDA_DECORATIVA_H, 0);
-	}
-}
-
 void inicializar_inicio(struct Inicio *inicio, struct Sprites *sprites)
 {
 	inicializar_botao(&inicio->botao_continuar_jogo, INICIO_BOTAO_MENU_L, INICIO_BOTAO_MENU_H);
@@ -1550,12 +1607,12 @@ void posicionar_inicio(struct Inicio *inicio, struct Tela *tela)
 	inicio->botao_continuar_jogo.x = menu_x;
 	inicio->botao_continuar_jogo.y = menu_y;
 
-	menu_y += INICIO_BOTAO_MENU_H + INICIO_ESPACO_ENTRE_BOTOES;
+	menu_y += INICIO_BOTAO_MENU_H + INICIO_BOTOES_ESPACO;
 
 	inicio->botao_novo_jogo.x = menu_x;
 	inicio->botao_novo_jogo.y = menu_y;
 
-	menu_y += INICIO_BOTAO_MENU_H + INICIO_ESPACO_ENTRE_BOTOES;
+	menu_y += INICIO_BOTAO_MENU_H + INICIO_BOTOES_ESPACO;
 
 	inicio->botao_sair.x = menu_x;
 	inicio->botao_sair.y = menu_y;
@@ -1563,7 +1620,7 @@ void posicionar_inicio(struct Inicio *inicio, struct Tela *tela)
 	inicio->botao_placar.x = marcador_x;
 	inicio->botao_placar.y = marcador_y;
 
-	marcador_y += INICIO_BOTAO_MARCADOR_H + INICIO_ESPACO_ENTRE_BOTOES;
+	marcador_y += INICIO_BOTAO_MARCADOR_H + INICIO_BOTOES_ESPACO;
 
 	inicio->botao_ajuda.x = marcador_x;
 	inicio->botao_ajuda.y = marcador_y;
@@ -1729,6 +1786,7 @@ int main()
 	sistema.redesenhar = false;
 
 	inicializar_inicio(&sistema.inicio, &tela.sprites);
+	inicializar_placar(&sistema.placar, &tela.sprites);
 
 	al_start_timer(timer);
 
@@ -1772,6 +1830,7 @@ int main()
 		if (sistema.reposicionar)
 		{
 			posicionar_inicio(&sistema.inicio, &tela);
+			posicionar_placar(&sistema.placar, &tela);
 		}
 
 		sistema.redesenhar = redesenhar && al_event_queue_is_empty(queue);
@@ -1785,6 +1844,9 @@ int main()
 		{
 		case CENA_INICIO:
 			cena_inicio(&tela, &sistema, &evento);
+			break;
+		case CENA_PLACAR:
+			cena_placar(&tela, &sistema, &evento);
 			break;
 		}
 	}
