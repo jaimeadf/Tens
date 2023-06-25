@@ -63,21 +63,6 @@
 #define ESPACO_PROGRESSO_HABILIDADE 2
 #define ESPACO_QUANTIDADE_HABILIDADE 4
 
-#define LARGURA_ORIGINAL 320
-#define ALTURA_ORIGINAL 180
-
-#define TITULO_TENS_L 140
-#define TITULO_TENS_H 32
-
-#define BORDA_DECORATIVA_L 12
-#define BORDA_DECORATIVA_H 11
-
-#define BOTAO_MENU_INICIO_L 70
-#define BOTAO_MENU_INICIO_H 24
-
-#define BOTAO_MARCADOR_INICIO_L 23
-#define BOTAO_MARCADOR_INICIO_H 19
-
 #define DADO_L 24
 #define DADO_H 25
 
@@ -113,14 +98,47 @@
 
 #define PROGRESSO_ALTURA 15
 
-#define MARGEM_PEQUENA 8
-
 #define ESCORE_OFFSET_CIMA 3
 #define TEMPO_OFFSET_CIMA 26
 
 #define QUADRO_OFFSET_DIREITA 24
 
 #define BOTAO_ROTACIONAR_OFFSET_DIREITA 8
+
+#define LARGURA_ORIGINAL 320
+#define ALTURA_ORIGINAL 180
+
+#define INICIO_TITULO_L 140
+#define INICIO_TITULO_H 32
+
+#define BORDA_DECORATIVA_L 24
+#define BORDA_DECORATIVA_H 11
+
+#define BOTAO_VOLTAR_L 22
+#define BOTAO_VOLTAR_H 18
+
+#define INICIO_BOTAO_MENU_L 70
+#define INICIO_BOTAO_MENU_H 23
+
+#define INICIO_BOTAO_MARCADOR_L 23
+#define INICIO_BOTAO_MARCADOR_H 19
+
+#define PLACAR_TITULO_L 80
+#define PLACAR_TITULO_H 14
+
+#define MARGEM_PEQUENA 8
+#define MARGEM_MEDIA 16
+#define MARGEM_GRANDE 24
+
+#define BOTAO_VOLTAR_OFFSET_CIMA 14
+
+#define INICIO_ESPACO_ENTRE_BOTOES 2
+#define INICIO_BOTOES_OFFSET_CIMA (MARGEM_MEDIA + INICIO_TITULO_H + 20)
+
+#define CENA_INICIO 0
+#define CENA_PLACAR 1
+#define CENA_AJUDA 2
+#define CENA_JOGO 3
 
 #define COR_PRETO al_map_rgb(0, 0, 0)
 #define COR_BRANCO al_map_rgb(255, 255, 255)
@@ -134,25 +152,24 @@ struct Fontes {
 struct Sprites {
 	ALLEGRO_BITMAP *sheet;
 
-	ALLEGRO_BITMAP *titulo_tens;
-
 	ALLEGRO_BITMAP *borda_decorativa;
+	ALLEGRO_BITMAP *botao_voltar_padrao;
 
-	ALLEGRO_BITMAP *botao_continuar_jogo_padrao;
-	ALLEGRO_BITMAP *botao_continuar_jogo_sobre;
-	ALLEGRO_BITMAP *botao_continuar_jogo_desabilitado;
+	ALLEGRO_BITMAP *inicio_titulo;
 
-	ALLEGRO_BITMAP *botao_novo_jogo_padrao;
-	ALLEGRO_BITMAP *botao_novo_jogo_sobre;
+	ALLEGRO_BITMAP *inicio_botao_continuar_jogo_padrao;
+	ALLEGRO_BITMAP *inicio_botao_continuar_jogo_desabilitado;
 
-	ALLEGRO_BITMAP *botao_sair_padrao;
-	ALLEGRO_BITMAP *botao_sair_sobre;
+	ALLEGRO_BITMAP *inicio_botao_novo_jogo_padrao;
+	ALLEGRO_BITMAP *inicio_botao_sair_padrao;
 
-	ALLEGRO_BITMAP *botao_placar_padrao;
-	ALLEGRO_BITMAP *botao_placar_sobre;
+	ALLEGRO_BITMAP *inicio_botao_placar_padrao;
+	ALLEGRO_BITMAP *inicio_botao_placar_sobre;
 
-	ALLEGRO_BITMAP *botao_ajuda_padrao;
-	ALLEGRO_BITMAP *botao_ajuda_sobre;
+	ALLEGRO_BITMAP *inicio_botao_ajuda_padrao;
+	ALLEGRO_BITMAP *inicio_botao_ajuda_sobre;
+
+	ALLEGRO_BITMAP *placar_titulo;
 
 	ALLEGRO_BITMAP *moldura;
 	ALLEGRO_BITMAP *slot;
@@ -185,6 +202,8 @@ struct Sprites {
 };
 
 struct Tela {
+	bool cheia;
+
 	int escala;
 
 	int largura;
@@ -213,15 +232,20 @@ struct Botao {
 };
 
 struct Inicio {
-	int a;
+	struct Botao botao_continuar_jogo;
+	struct Botao botao_novo_jogo;
+	struct Botao botao_sair;
+
+	struct Botao botao_placar;
+	struct Botao botao_ajuda;
 };
 
 struct Placar {
-	int b;
+	struct Botao botao_voltar;
 };
 
 struct Ajuda {
-	int c;
+	struct Botao botao_voltar;
 };
 
 struct Recorde
@@ -331,7 +355,9 @@ struct Jogo {
 struct Sistema {
 	int cena;
 
+	bool encerrar;
 	bool redesenhar;
+	bool reposicionar;
 
 	struct Inicio inicio;
 	struct Placar placar;
@@ -370,25 +396,24 @@ void carregar_sprites(struct Sprites *sprites)
 	sprites->sheet = al_load_bitmap("assets/sprites/spritesheet.bmp");
 	verificar_init(sprites->sheet, "spritesheet.bmp");
 
-	sprites->titulo_tens = recortar_sprite(sprites, 0, 200, TITULO_TENS_L, TITULO_TENS_H);
-	
 	sprites->borda_decorativa = recortar_sprite(sprites, 140, 221, BORDA_DECORATIVA_L, BORDA_DECORATIVA_H);
+	sprites->botao_voltar_padrao = recortar_sprite(sprites, 140, 203, BOTAO_VOLTAR_L, BOTAO_VOLTAR_H);
 
-	sprites->botao_continuar_jogo_padrao = recortar_sprite(sprites, 0, 232, BOTAO_MENU_INICIO_L, BOTAO_MENU_INICIO_H);
-	sprites->botao_continuar_jogo_sobre = recortar_sprite(sprites, 70, 232, BOTAO_MENU_INICIO_L, BOTAO_MENU_INICIO_H);
-	sprites->botao_continuar_jogo_desabilitado = recortar_sprite(sprites, 140, 232, BOTAO_MENU_INICIO_L, BOTAO_MENU_INICIO_H);
+	sprites->inicio_titulo = recortar_sprite(sprites, 0, 200, INICIO_TITULO_L, INICIO_TITULO_H);
 
-	sprites->botao_novo_jogo_padrao = recortar_sprite(sprites, 0, 256, BOTAO_MENU_INICIO_L, BOTAO_MENU_INICIO_H);
-	sprites->botao_novo_jogo_sobre = recortar_sprite(sprites, 70, 256, BOTAO_MENU_INICIO_L, BOTAO_MENU_INICIO_H);
+	sprites->inicio_botao_continuar_jogo_padrao = recortar_sprite(sprites, 0, 232, INICIO_BOTAO_MENU_L, INICIO_BOTAO_MENU_H);
+	sprites->inicio_botao_continuar_jogo_desabilitado = recortar_sprite(sprites, 70, 232, INICIO_BOTAO_MENU_L, INICIO_BOTAO_MENU_H);
 
-	sprites->botao_sair_padrao = recortar_sprite(sprites, 0, 256, BOTAO_MENU_INICIO_L, BOTAO_MENU_INICIO_H);
-	sprites->botao_sair_sobre = recortar_sprite(sprites, 70, 280, BOTAO_MENU_INICIO_L, BOTAO_MENU_INICIO_H);
+	sprites->inicio_botao_novo_jogo_padrao = recortar_sprite(sprites, 0, 255, INICIO_BOTAO_MENU_L, INICIO_BOTAO_MENU_H);
+	sprites->inicio_botao_sair_padrao = recortar_sprite(sprites, 0, 278, INICIO_BOTAO_MENU_L, INICIO_BOTAO_MENU_H);
 
-	sprites->botao_placar_padrao = recortar_sprite(sprites, 140, 256, BOTAO_MARCADOR_INICIO_L, BOTAO_MARCADOR_INICIO_H);
-	sprites->botao_placar_sobre = recortar_sprite(sprites, 163, 256, BOTAO_MARCADOR_INICIO_L, BOTAO_MARCADOR_INICIO_H);
+	sprites->inicio_botao_placar_padrao = recortar_sprite(sprites, 70, 255, INICIO_BOTAO_MARCADOR_L, INICIO_BOTAO_MARCADOR_H);
+	sprites->inicio_botao_placar_sobre = recortar_sprite(sprites, 93, 255, INICIO_BOTAO_MARCADOR_L, INICIO_BOTAO_MARCADOR_H);
 
-	sprites->botao_ajuda_padrao = recortar_sprite(sprites, 140, 256, BOTAO_MARCADOR_INICIO_L, BOTAO_MARCADOR_INICIO_H);
-	sprites->botao_ajuda_sobre = recortar_sprite(sprites, 163, 275, BOTAO_MARCADOR_INICIO_L, BOTAO_MARCADOR_INICIO_H);
+	sprites->inicio_botao_ajuda_padrao = recortar_sprite(sprites, 70, 274, INICIO_BOTAO_MARCADOR_L, INICIO_BOTAO_MARCADOR_H);
+	sprites->inicio_botao_ajuda_sobre = recortar_sprite(sprites, 93, 274, INICIO_BOTAO_MARCADOR_L, INICIO_BOTAO_MARCADOR_H);
+
+	sprites->placar_titulo = recortar_sprite(sprites, 0, 300, PLACAR_TITULO_L, PLACAR_TITULO_H);
 
 	sprites->moldura = recortar_sprite(sprites, 168, 0, DADO_L, DADO_H);
 	sprites->slot = recortar_sprite(sprites, 168, 25, SLOT_L, SLOT_H);
@@ -462,32 +487,7 @@ bool colisao_retangulo(int x, int y, int largura, int altura, int px, int py)
 	return colisao_area(x, y, x + largura, y + altura, px, py);
 }
 
-void redimensionar_tela(struct Tela *tela)
-{
-	ALLEGRO_TRANSFORM transform;
 
-	al_destroy_bitmap(tela->canvas);
-
-	float largura_janela = al_get_display_width(tela->display);
-	float altura_janela = al_get_display_height(tela->display);
-
-	float razao_x = floor(largura_janela / LARGURA_ORIGINAL);
-	float razao_y = floor(altura_janela / ALTURA_ORIGINAL);
-
-	tela->escala = razao_x < razao_y ? razao_x : razao_y;
-
-	if (tela->escala < 1)
-		tela->escala = 1;
-
-	tela->largura = largura_janela / tela->escala;
-	tela->altura = altura_janela / tela->escala;
-
-	tela->canvas = al_create_bitmap(tela->largura, tela->altura);
-
-	al_identity_transform(&transform);
-	al_scale_transform(&transform, tela->escala, tela->escala);
-	al_use_transform(&transform);
-}
 
 void inicializar_botao(struct Botao *botao, int largura, int altura)
 {
@@ -1425,6 +1425,264 @@ void atualizar_quadro(struct Jogo *jogo)
 	}
 }
 
+void criar_display(struct Tela *tela)
+{
+	if (tela->cheia)
+	{
+		al_set_new_display_flags(ALLEGRO_FULLSCREEN_WINDOW);
+	}
+	else
+	{
+		al_set_new_display_flags(ALLEGRO_WINDOWED | ALLEGRO_RESIZABLE | ALLEGRO_MAXIMIZED);
+	}
+
+	tela->display = al_create_display(1280, 720);
+	verificar_init(tela->display, "display");
+}
+
+void criar_canvas(struct Tela *tela)
+{
+	ALLEGRO_TRANSFORM transform;
+
+	float largura_janela = al_get_display_width(tela->display);
+	float altura_janela = al_get_display_height(tela->display);
+
+	float razao_x = floor(largura_janela / LARGURA_ORIGINAL);
+	float razao_y = floor(altura_janela / ALTURA_ORIGINAL);
+
+	tela->escala = razao_x < razao_y ? razao_x : razao_y;
+
+	if (tela->escala < 1)
+	{
+		tela->escala = 1;
+	}
+
+	tela->largura = largura_janela / tela->escala;
+	tela->altura = altura_janela / tela->escala;
+
+	tela->canvas = al_create_bitmap(tela->largura, tela->altura);
+	verificar_init(tela->canvas, "canvas");
+}
+
+void alternar_tela_cheia(struct Tela *tela)
+{
+	tela->cheia = !tela->cheia;
+
+	al_destroy_display(tela->display);
+	criar_display(tela);
+}
+
+void redimensionar_canvas(struct Tela *tela)
+{
+	al_destroy_bitmap(tela->canvas);
+	criar_canvas(tela);
+}
+
+void preparar_desenho(struct Tela *tela)
+{
+	al_set_target_bitmap(tela->canvas);
+	al_clear_to_color(al_map_rgba(0, 0, 0, 0));
+}
+
+void finalizar_desenho(struct Tela *tela)
+{
+	al_set_target_backbuffer(tela->display);
+	al_clear_to_color(COR_BRANCO);
+	al_draw_scaled_bitmap(tela->canvas, 0, 0, tela->largura, tela->altura, 0, 0, tela->largura * tela->escala, tela->altura * tela->escala, 0);
+	al_flip_display();
+}
+
+void transicionar_para_cena(struct Sistema *sistema, int cena)
+{
+	sistema->cena = cena;
+}
+
+void desenhar_borda_decorativa(struct Tela *tela)
+{
+	for (int i = 0; i * BORDA_DECORATIVA_L < tela->largura; i++)
+	{
+		al_draw_bitmap(tela->sprites.borda_decorativa, i * BORDA_DECORATIVA_L, tela->altura - BORDA_DECORATIVA_H, 0);
+	}
+}
+
+void inicializar_inicio(struct Inicio *inicio, struct Sprites *sprites)
+{
+	inicializar_botao(&inicio->botao_continuar_jogo, INICIO_BOTAO_MENU_L, INICIO_BOTAO_MENU_H);
+	inicializar_botao(&inicio->botao_novo_jogo, INICIO_BOTAO_MENU_L, INICIO_BOTAO_MENU_H);
+	inicializar_botao(&inicio->botao_sair, INICIO_BOTAO_MENU_L, INICIO_BOTAO_MENU_H);
+	inicializar_botao(&inicio->botao_placar, INICIO_BOTAO_MARCADOR_L, INICIO_BOTAO_MARCADOR_H);
+	inicializar_botao(&inicio->botao_ajuda, INICIO_BOTAO_MARCADOR_L, INICIO_BOTAO_MARCADOR_H);
+
+	inicio->botao_continuar_jogo.sprite_padrao = sprites->inicio_botao_continuar_jogo_padrao;
+	inicio->botao_continuar_jogo.sprite_sobre = sprites->inicio_botao_continuar_jogo_padrao;
+	inicio->botao_continuar_jogo.sprite_pressionado = sprites->inicio_botao_continuar_jogo_padrao;
+	inicio->botao_continuar_jogo.sprite_desabilitado = sprites->inicio_botao_continuar_jogo_desabilitado;
+
+	inicio->botao_novo_jogo.sprite_padrao = sprites->inicio_botao_novo_jogo_padrao;
+	inicio->botao_novo_jogo.sprite_sobre = sprites->inicio_botao_novo_jogo_padrao;
+	inicio->botao_novo_jogo.sprite_pressionado = sprites->inicio_botao_novo_jogo_padrao;
+	inicio->botao_novo_jogo.sprite_desabilitado = sprites->inicio_botao_novo_jogo_padrao;
+
+	inicio->botao_sair.sprite_padrao = sprites->inicio_botao_sair_padrao;
+	inicio->botao_sair.sprite_sobre = sprites->inicio_botao_sair_padrao;
+	inicio->botao_sair.sprite_pressionado = sprites->inicio_botao_sair_padrao;
+	inicio->botao_sair.sprite_desabilitado = sprites->inicio_botao_sair_padrao;
+
+	inicio->botao_placar.sprite_padrao = sprites->inicio_botao_placar_padrao;
+	inicio->botao_placar.sprite_sobre = sprites->inicio_botao_placar_sobre;
+	inicio->botao_placar.sprite_pressionado = sprites->inicio_botao_placar_padrao;
+	inicio->botao_placar.sprite_desabilitado = sprites->inicio_botao_placar_padrao;
+
+	inicio->botao_ajuda.sprite_padrao = sprites->inicio_botao_ajuda_padrao;
+	inicio->botao_ajuda.sprite_sobre = sprites->inicio_botao_ajuda_sobre;
+	inicio->botao_ajuda.sprite_pressionado = sprites->inicio_botao_ajuda_padrao;
+	inicio->botao_ajuda.sprite_desabilitado = sprites->inicio_botao_ajuda_padrao;
+}
+
+void posicionar_inicio(struct Inicio *inicio, struct Tela *tela)
+{
+	int menu_x = centro(0, tela->largura, INICIO_BOTAO_MENU_L);
+	int menu_y = INICIO_BOTOES_OFFSET_CIMA;
+
+	int marcador_x = tela->largura - INICIO_BOTAO_MARCADOR_L;
+	int marcador_y = INICIO_BOTOES_OFFSET_CIMA;
+
+	inicio->botao_continuar_jogo.x = menu_x;
+	inicio->botao_continuar_jogo.y = menu_y;
+
+	menu_y += INICIO_BOTAO_MENU_H + INICIO_ESPACO_ENTRE_BOTOES;
+
+	inicio->botao_novo_jogo.x = menu_x;
+	inicio->botao_novo_jogo.y = menu_y;
+
+	menu_y += INICIO_BOTAO_MENU_H + INICIO_ESPACO_ENTRE_BOTOES;
+
+	inicio->botao_sair.x = menu_x;
+	inicio->botao_sair.y = menu_y;
+
+	inicio->botao_placar.x = marcador_x;
+	inicio->botao_placar.y = marcador_y;
+
+	marcador_y += INICIO_BOTAO_MARCADOR_H + INICIO_ESPACO_ENTRE_BOTOES;
+
+	inicio->botao_ajuda.x = marcador_x;
+	inicio->botao_ajuda.y = marcador_y;
+}
+
+void cena_inicio(struct Tela *tela, struct Sistema *sistema, ALLEGRO_EVENT *evento)
+{
+	switch (evento->type)
+	{
+		case ALLEGRO_EVENT_MOUSE_AXES:
+		{
+			int mouse_x = evento->mouse.x / tela->escala;
+			int mouse_y = evento->mouse.y / tela->escala;
+
+			detectar_sobreposicao_botao(&sistema->inicio.botao_continuar_jogo, mouse_x, mouse_y);
+			detectar_sobreposicao_botao(&sistema->inicio.botao_novo_jogo, mouse_x, mouse_y);
+			detectar_sobreposicao_botao(&sistema->inicio.botao_sair, mouse_x, mouse_y);
+			detectar_sobreposicao_botao(&sistema->inicio.botao_placar, mouse_x, mouse_y);
+			detectar_sobreposicao_botao(&sistema->inicio.botao_ajuda, mouse_x, mouse_y);
+
+			break;
+		}
+		case ALLEGRO_EVENT_MOUSE_BUTTON_DOWN:
+			if (pressionar_botao(&sistema->inicio.botao_novo_jogo))
+			{
+				transicionar_para_cena(sistema, CENA_JOGO);
+				soltar_botao(&sistema->inicio.botao_novo_jogo);
+			}
+
+			if (pressionar_botao(&sistema->inicio.botao_sair))
+			{
+				sistema->encerrar = true;
+				soltar_botao(&sistema->inicio.botao_sair);
+			}
+
+			if (pressionar_botao(&sistema->inicio.botao_placar))
+			{
+				transicionar_para_cena(sistema, CENA_PLACAR);
+				soltar_botao(&sistema->inicio.botao_placar);
+			}
+
+			if (pressionar_botao(&sistema->inicio.botao_ajuda))
+			{
+				transicionar_para_cena(sistema, CENA_AJUDA);
+				soltar_botao(&sistema->inicio.botao_placar);
+			}
+
+			break;
+	}
+
+	if (sistema->redesenhar)
+	{
+		preparar_desenho(tela);
+		
+		al_draw_bitmap(tela->sprites.inicio_titulo, centro(0, tela->largura, INICIO_TITULO_L), MARGEM_MEDIA, 0);
+		desenhar_botao(&sistema->inicio.botao_continuar_jogo);
+		desenhar_botao(&sistema->inicio.botao_novo_jogo);
+		desenhar_botao(&sistema->inicio.botao_sair);
+		desenhar_botao(&sistema->inicio.botao_placar);
+		desenhar_botao(&sistema->inicio.botao_ajuda);
+
+		desenhar_borda_decorativa(tela);
+
+		finalizar_desenho(tela);
+	}
+}
+
+void inicializar_placar(struct Placar *placar, struct Sprites *sprites)
+{
+	inicializar_botao(&placar->botao_voltar, BOTAO_VOLTAR_L, BOTAO_VOLTAR_H);
+
+	placar->botao_voltar.sprite_padrao = sprites->botao_voltar_padrao;
+	placar->botao_voltar.sprite_sobre = sprites->botao_voltar_padrao;
+	placar->botao_voltar.sprite_pressionado = sprites->botao_voltar_padrao;
+	placar->botao_voltar.sprite_desabilitado = sprites->botao_voltar_padrao;
+}
+
+void posicionar_placar(struct Placar *placar, struct Tela *tela)
+{
+	placar->botao_voltar.x = MARGEM_GRANDE;
+	placar->botao_voltar.y = BOTAO_VOLTAR_OFFSET_CIMA;
+}
+
+void cena_placar(struct Tela *tela, struct Sistema *sistema, ALLEGRO_EVENT *evento)
+{
+	switch (evento->type)
+	{
+		case ALLEGRO_EVENT_MOUSE_AXES:
+		{
+			int mouse_x = evento->mouse.x / tela->escala;
+			int mouse_y = evento->mouse.y / tela->escala;
+
+			detectar_sobreposicao_botao(&sistema->placar.botao_voltar, mouse_x, mouse_y);
+
+			break;
+		}
+		case ALLEGRO_EVENT_MOUSE_BUTTON_DOWN:
+			if (pressionar_botao(&sistema->placar.botao_voltar))
+			{
+				transicionar_para_cena(sistema, CENA_INICIO);
+				soltar_botao(&sistema->placar.botao_voltar);
+			}
+
+			break;
+	}
+
+	if (sistema->redesenhar)
+	{
+		preparar_desenho(tela);
+
+		al_draw_bitmap(tela->sprites.placar_titulo, centro(0, tela->largura, PLACAR_TITULO_L), MARGEM_MEDIA, 0);
+		desenhar_botao(&sistema->placar.botao_voltar);
+
+		desenhar_borda_decorativa(tela);
+
+		finalizar_desenho(tela);
+	}
+}
+
 int main()
 {
 	srand(time(NULL));
@@ -1438,14 +1696,12 @@ int main()
 	verificar_init(al_install_keyboard(), "keyboard");
 	verificar_init(al_install_mouse(), "mouse");
 
-	al_set_new_display_flags(ALLEGRO_WINDOWED | ALLEGRO_RESIZABLE);
-
 	struct Tela tela;
 
-	tela.display = al_create_display(1280, 720);
-	verificar_init(tela.display, "display");
+	tela.cheia = false;
 
-	tela.canvas = NULL;
+	criar_display(&tela);
+	criar_canvas(&tela);
 
 	ALLEGRO_TIMER *timer = al_create_timer(PERIODO_TICK);
 	verificar_init(timer, "timer");
@@ -1461,202 +1717,75 @@ int main()
 	al_register_event_source(queue, al_get_keyboard_event_source());
 	al_register_event_source(queue, al_get_timer_event_source(timer));
 
-	bool finalizar = false;
-	bool desenhar = true;
+	ALLEGRO_EVENT evento;
+	bool redesenhar = false;
 
-	ALLEGRO_EVENT event;
+	struct Sistema sistema;
 
-	struct Jogo jogo;
+	sistema.cena = CENA_INICIO;
 
-	jogo.slot_selecionado = -1;
+	sistema.encerrar = false;
+	sistema.reposicionar = true;
+	sistema.redesenhar = false;
 
-	jogo.escore = 0;
-	jogo.tempo = 0;
-
-	redimensionar_tela(&tela);
-
-	inicializar_quadro(&jogo.quadro);
-	inicializar_slots(&tela.sprites, jogo.slots);
-	inicializar_desfazer(&tela.sprites, &jogo.desfazer);
-	inicializar_bomba(&tela.sprites, &jogo.bomba);
-	inicializar_rotacao(&tela.sprites, &jogo.rotacao);
-
-	posicionar_quadro(&tela, &jogo.quadro);
-	posicionar_slots(&tela, jogo.slots);
-	posicionar_habilidades(&tela, &jogo);
-
-	gerar_slots(jogo.slots);
-
-	jogo.desfazer.quantidade = 1;
-	jogo.bomba.quantidade = 10;
-	jogo.rotacao.quantidade = 1;
+	inicializar_inicio(&sistema.inicio, &tela.sprites);
 
 	al_start_timer(timer);
 
-	while(true) {
-		al_wait_for_event(queue, &event);
+	while (true)
+	{
+		al_wait_for_event(queue, &evento);
 
-		switch (event.type)
+		switch (evento.type)
 		{
 		case ALLEGRO_EVENT_TIMER:
-			atualizar_quadro(&jogo);
-			atualizar_slots(&jogo);
-			atualizar_habilidade(&jogo.desfazer);
-			atualizar_habilidade(&jogo.bomba);
-			atualizar_habilidade(&jogo.rotacao);
-
-			jogo.tempo++;
-
-			desenhar = true;
+			redesenhar = true;
 			break;
 		case ALLEGRO_EVENT_DISPLAY_CLOSE:
-			finalizar = true;
+			sistema.encerrar = true;
 			break;
 		case ALLEGRO_EVENT_DISPLAY_RESIZE:
 			al_acknowledge_resize(tela.display);
-			redimensionar_tela(&tela);
-			posicionar_quadro(&tela, &jogo.quadro);
-			posicionar_slots(&tela, jogo.slots);
-			break;
-		case ALLEGRO_EVENT_MOUSE_AXES:
-		{
-			int mouse_x = event.mouse.x / tela.escala;
-			int mouse_y = event.mouse.y / tela.escala;
+			redimensionar_canvas(&tela);
 
-			if (jogo.slot_selecionado != -1)
-				arrastar_slot(&jogo.slots[jogo.slot_selecionado], mouse_x, mouse_y);
-
-			detectar_sobreposicao_botao(&jogo.desfazer.botao, mouse_x, mouse_y);
-			detectar_sobreposicao_botao(&jogo.bomba.botao, mouse_x, mouse_y);
-			detectar_sobreposicao_botao(&jogo.rotacao.botao, mouse_x, mouse_y);
-
-
-			for (int i = 0; i < SLOTS_TAM; i++)
-				detectar_sobreposicao_botao(&jogo.slots[i].botao_rotacionar, mouse_x, mouse_y);
-				
-			 
-			break;
-		}
-		case ALLEGRO_EVENT_MOUSE_BUTTON_DOWN:
-		{
-			int mouse_x = event.mouse.x / tela.escala;
-			int mouse_y = event.mouse.y / tela.escala;
-
-			if (event.mouse.button & 1)
-			{
-				if (pressionar_botao(&jogo.desfazer.botao))
-				{
-					usar_desfazer(&jogo);
-				}
-
-				if (pressionar_botao(&jogo.bomba.botao))
-				{
-					usar_bomba(&jogo);
-				}
-
-				for (int i = 0; i < SLOTS_TAM; i++)
-				{
-					if (pressionar_botao(&jogo.slots[i].botao_rotacionar))
-					{
-						usar_rotacao(&jogo, &jogo.slots[i]);
-					}
-				}
-
-				for (int i = 0; i < SLOTS_TAM; i++)
-				{
-					if (colisao_slot(&jogo.slots[i], mouse_x, mouse_y))
-					{
-						jogo.slot_selecionado = i;
-						pegar_slot(&jogo.slots[i], mouse_x, mouse_y);
-					}
-				}
-			}
-			
-			break;
-		}
-		case ALLEGRO_EVENT_MOUSE_BUTTON_UP:
-			if (event.mouse.button & 1)
-			{
-				soltar_botao(&jogo.desfazer.botao);
-				soltar_botao(&jogo.bomba.botao);
-				soltar_botao(&jogo.rotacao.botao);
-
-				for (int i = 0; i < SLOTS_TAM; i++)
-				{
-					soltar_botao(&jogo.slots[i].botao_rotacionar);
-				}
-
-				if (jogo.slot_selecionado != -1)
-				{
-					struct Slot *slot = &jogo.slots[jogo.slot_selecionado];
-
-					int linha;
-					int coluna;
-
-					if (largar_slot(&jogo.quadro, slot, &linha, &coluna))
-					{
-						registrar_jogada(&jogo, jogo.slot_selecionado, linha, coluna);
-						analisar_consequencias(&jogo);
-
-						if (slot_vazios(jogo.slots))
-						{
-							gerar_slots(jogo.slots);
-						}
-					}
-
-					jogo.slot_selecionado = -1;;
-				}
-			}
+			sistema.reposicionar = true;
 			break;
 		case ALLEGRO_EVENT_KEY_DOWN:
-
-			if (jogo.slot_selecionado != -1)
+			if (evento.keyboard.keycode == ALLEGRO_KEY_F11)
 			{
-				if (event.keyboard.keycode == ALLEGRO_KEY_SPACE)
-				{
-					gerar_slot(&jogo.slots[jogo.slot_selecionado]);
-				}
+				alternar_tela_cheia(&tela);
+				redimensionar_canvas(&tela);
 
-				if (event.keyboard.keycode == ALLEGRO_KEY_R)
-				{
-					rotacionar_slot(&jogo.slots[jogo.slot_selecionado]);
-				}
+				al_register_event_source(queue, al_get_display_event_source(tela.display));
+
+				sistema.reposicionar = true;
 			}
+			break;
 
+		}
+
+		if (sistema.encerrar)
+		{
 			break;
 		}
 
-		if (finalizar)
-			break;
-
-		if (desenhar && al_event_queue_is_empty(queue))
+		if (sistema.reposicionar)
 		{
-			al_set_target_bitmap(tela.canvas);
-			al_clear_to_color(al_map_rgba(0, 0, 0, 0));
+			posicionar_inicio(&sistema.inicio, &tela);
+		}
 
-			desenhar_quadro(&tela, &jogo.quadro);
+		sistema.redesenhar = redesenhar && al_event_queue_is_empty(queue);
 
-			for (int i = 0; i < SLOTS_TAM; i++)
-			{
-				desenhar_slot(&tela, &jogo.slots[i]);
-			}
+		if (sistema.redesenhar)
+		{
+			redesenhar = false;
+		}
 
-			if (jogo.slot_selecionado != -1)
-			{
-				desenhar_peca(&tela, &jogo.slots[jogo.slot_selecionado].peca);
-			}
-
-			desenhar_pontuacao(&tela, &jogo);
-			desenhar_habilidade(&tela, &jogo.desfazer);
-			desenhar_habilidade(&tela, &jogo.bomba);
-			desenhar_habilidade(&tela, &jogo.rotacao);
-
-			al_set_target_backbuffer(tela.display);
-			al_clear_to_color(al_map_rgb(255, 255, 255));
-			al_draw_bitmap(tela.canvas, 0, 0, 0);
-			al_flip_display();
-
-			desenhar = false;
+		switch (sistema.cena)
+		{
+		case CENA_INICIO:
+			cena_inicio(&tela, &sistema, &evento);
+			break;
 		}
 	}
 }
