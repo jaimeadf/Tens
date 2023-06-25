@@ -66,6 +66,18 @@
 #define LARGURA_ORIGINAL 320
 #define ALTURA_ORIGINAL 180
 
+#define TITULO_TENS_L 140
+#define TITULO_TENS_H 32
+
+#define BORDA_DECORATIVA_L 12
+#define BORDA_DECORATIVA_H 11
+
+#define BOTAO_MENU_INICIO_L 70
+#define BOTAO_MENU_INICIO_H 24
+
+#define BOTAO_MARCADOR_INICIO_L 23
+#define BOTAO_MARCADOR_INICIO_H 19
+
 #define DADO_L 24
 #define DADO_H 25
 
@@ -123,10 +135,12 @@ struct Sprites {
 	ALLEGRO_BITMAP *sheet;
 
 	ALLEGRO_BITMAP *titulo_tens;
-	
+
+	ALLEGRO_BITMAP *borda_decorativa;
+
 	ALLEGRO_BITMAP *botao_continuar_jogo_padrao;
 	ALLEGRO_BITMAP *botao_continuar_jogo_sobre;
-	ALLEGRO_BITMAP *botao_continuar_jogo_desativado;
+	ALLEGRO_BITMAP *botao_continuar_jogo_desabilitado;
 
 	ALLEGRO_BITMAP *botao_novo_jogo_padrao;
 	ALLEGRO_BITMAP *botao_novo_jogo_sobre;
@@ -355,6 +369,26 @@ void carregar_sprites(struct Sprites *sprites)
 {
 	sprites->sheet = al_load_bitmap("assets/sprites/spritesheet.bmp");
 	verificar_init(sprites->sheet, "spritesheet.bmp");
+
+	sprites->titulo_tens = recortar_sprite(sprites, 0, 200, TITULO_TENS_L, TITULO_TENS_H);
+	
+	sprites->borda_decorativa = recortar_sprite(sprites, 140, 221, BORDA_DECORATIVA_L, BORDA_DECORATIVA_H);
+
+	sprites->botao_continuar_jogo_padrao = recortar_sprite(sprites, 0, 232, BOTAO_MENU_INICIO_L, BOTAO_MENU_INICIO_H);
+	sprites->botao_continuar_jogo_sobre = recortar_sprite(sprites, 70, 232, BOTAO_MENU_INICIO_L, BOTAO_MENU_INICIO_H);
+	sprites->botao_continuar_jogo_desabilitado = recortar_sprite(sprites, 140, 232, BOTAO_MENU_INICIO_L, BOTAO_MENU_INICIO_H);
+
+	sprites->botao_novo_jogo_padrao = recortar_sprite(sprites, 0, 256, BOTAO_MENU_INICIO_L, BOTAO_MENU_INICIO_H);
+	sprites->botao_novo_jogo_sobre = recortar_sprite(sprites, 70, 256, BOTAO_MENU_INICIO_L, BOTAO_MENU_INICIO_H);
+
+	sprites->botao_sair_padrao = recortar_sprite(sprites, 0, 256, BOTAO_MENU_INICIO_L, BOTAO_MENU_INICIO_H);
+	sprites->botao_sair_sobre = recortar_sprite(sprites, 70, 280, BOTAO_MENU_INICIO_L, BOTAO_MENU_INICIO_H);
+
+	sprites->botao_placar_padrao = recortar_sprite(sprites, 140, 256, BOTAO_MARCADOR_INICIO_L, BOTAO_MARCADOR_INICIO_H);
+	sprites->botao_placar_sobre = recortar_sprite(sprites, 163, 256, BOTAO_MARCADOR_INICIO_L, BOTAO_MARCADOR_INICIO_H);
+
+	sprites->botao_ajuda_padrao = recortar_sprite(sprites, 140, 256, BOTAO_MARCADOR_INICIO_L, BOTAO_MARCADOR_INICIO_H);
+	sprites->botao_ajuda_sobre = recortar_sprite(sprites, 163, 275, BOTAO_MARCADOR_INICIO_L, BOTAO_MARCADOR_INICIO_H);
 
 	sprites->moldura = recortar_sprite(sprites, 168, 0, DADO_L, DADO_H);
 	sprites->slot = recortar_sprite(sprites, 168, 25, SLOT_L, SLOT_H);
