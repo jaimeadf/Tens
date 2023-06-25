@@ -177,6 +177,8 @@
 #define COR_PROGRESSO al_map_rgb(121, 240, 8)
 #define COR_SOBREPOSICAO al_map_rgba(0, 0, 0, 210)
 
+#define ARQUIVO_RECORDES "recordes.txt"
+
 #define DADO_VAZIO -1
 
 #define PERIODO_TICK (1.0 / 60.0)
@@ -319,7 +321,7 @@ struct Pausa {
 
 struct GameOver {
 	int tempo;
-	int score;
+	int escore;
 
 	struct Botao botao_sair;
 	struct Botao botao_jogar_novamente;
@@ -329,7 +331,7 @@ struct Recorde
 {
 	bool vago;
 
-	int score;
+	int escore;
 	int tempo;
 };
 
@@ -1471,6 +1473,83 @@ void desenhar_slots(struct Slot slots[SLOTS_TAM], struct Tela *tela)
 	}
 }
 
+bool comparar_recorde(struct Recorde *recorde, int escore, int tempo)
+{
+	return recorde->vago || escore > recorde->escore || escore == recorde->escore && tempo < recorde->tempo;
+}
+
+void carregar_recordes(struct Recorde recordes[RECORDES_TAM])
+{
+	FILE *arquivo = fopen(ARQUIVO_RECORDES, "r");
+
+	if (arquivo)
+	{
+		for (int i = 0; i < RECORDES_TAM; i++)
+		{
+			int vago, escore, tempo;
+			int resultado = fscanf(arquivo, "%d %d %d\n", &vago, &escore, &tempo);
+
+			if (resultado == 3)
+			{
+				recordes[i].vago = vago;
+				recordes[i].escore = escore;
+				recordes[i].tempo = tempo;
+			}
+		}
+
+		fclose(arquivo);
+	}
+}
+
+void salvar_recordes(struct Recorde recordes[RECORDES_TAM])
+{
+	FILE *arquivo = fopen(ARQUIVO_RECORDES, "w");
+
+	if (arquivo)
+	{
+		for (int i = 0; i < RECORDES_TAM; i++)
+		{
+			fprintf(arquivo, "%d %d %d\n", recordes[i].vago, recordes[i].escore, recordes[i].tempo);
+		}
+
+		fclose(arquivo);
+	}
+}
+
+void inserir_recorde(struct Recorde recordes[RECORDES_TAM], int escore, int tempo)
+{
+	for (int i = 0; i < RECORDES_TAM; i++)
+	{
+		if (comparar_recorde(&recordes[i], escore, tempo))
+		{
+			for (int j = RECORDES_TAM - 1; j > i; j--)
+			{
+				recordes[j] = recordes[j - 1];
+			}
+
+			recordes[i].vago = false;
+			recordes[i].escore = escore;
+			recordes[i].tempo = tempo;
+
+			break;
+		}
+	}
+
+	salvar_recordes(recordes);
+}
+
+void inicializar_recordes(struct Recorde recordes[RECORDES_TAM])
+{
+	for (int i = 0; i < RECORDES_TAM; i++)
+	{
+		recordes[i].vago = true;
+		recordes[i].escore = 0;
+		recordes[i].tempo = 0;
+	}
+
+	carregar_recordes(recordes);
+}
+
 void mudar_estado(struct Jogo *jogo, int estado)
 {
 	jogo->estado = estado;
@@ -1664,6 +1743,11 @@ bool verificar_fim_de_jogo(struct Jogo *jogo)
 
 void acabar_jogo(struct Jogo *jogo)
 {
+	jogo->game_over.escore = jogo->escore;
+	jogo->game_over.tempo = jogo->tempo;
+
+	inserir_recorde(jogo->recordes, jogo->escore, jogo->tempo);
+
 	mudar_estado(jogo, ESTADO_GAME_OVER);
 }
 
@@ -1702,7 +1786,7 @@ void resetar_jogo(struct Jogo *jogo)
 
 	resetar_quadro(&jogo->quadro);
 	resetar_slots(jogo->slots);
-	resetar_habilidades(&jogo);
+	resetar_habilidades(jogo);
 }
 
 void inicializar_desfazer(struct Habilidade *desfazer, struct Sprites *sprites)
@@ -1775,7 +1859,7 @@ void inicializar_pausa(struct Pausa *pausa, struct Sprites *sprites)
 void inicializar_game_over(struct GameOver *game_over, struct Sprites *sprites)
 {
 	game_over->tempo = 0;
-	game_over->score = 0;
+	game_over->escore = 0;
 
 	inicializar_botao(&game_over->botao_sair, GAME_OVER_BOTAO_L, GAME_OVER_BOTAO_H);
 	inicializar_botao(&game_over->botao_jogar_novamente, GAME_OVER_BOTAO_L, GAME_OVER_BOTAO_H);
@@ -1805,6 +1889,7 @@ void inicializar_jogo(struct Jogo *jogo, struct Sprites *sprites)
 	inicializar_quadro(&jogo->quadro);
 	inicializar_slots(jogo->slots, sprites);
 	inicializar_habilidades(jogo, sprites);
+	inicializar_recordes(jogo->recordes);
 	inicializar_pausa(&jogo->pausa, sprites);
 	inicializar_game_over(&jogo->game_over, sprites);
 
@@ -2007,7 +2092,7 @@ void desenhar_game_over(struct GameOver *game_over, struct Tela *tela)
 	al_draw_bitmap(tela->sprites.game_over_titulo, container_x, container_y, 0);
 
 	al_draw_textf(tela->fontes.pixelmix_8, COR_BRANCO, informacao_x, informacao_y, ALLEGRO_ALIGN_LEFT, "pontos:");
-	al_draw_textf(tela->fontes.pixelmix_8, COR_BRANCO, informacao_x + GAME_OVER_L, informacao_y, ALLEGRO_ALIGN_RIGHT, "%03d", game_over->score);
+	al_draw_textf(tela->fontes.pixelmix_8, COR_BRANCO, informacao_x + GAME_OVER_L, informacao_y, ALLEGRO_ALIGN_RIGHT, "%03d", game_over->escore);
 
 	informacao_y += GAME_OVER_INFORMACAO_H;
 
