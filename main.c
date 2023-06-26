@@ -36,6 +36,9 @@
 
 #define INICIO_BOTOES_ESPACO 2
 
+#define PLACAR_CONTEUDO_ESPACO 1
+#define PLACAR_COLUNAS_ESPACO 16
+
 #define PAUSA_TITULO_ESPACO 12
 #define PAUSA_BOTOES_ESPACO 1
 
@@ -71,6 +74,9 @@
 
 #define PLACAR_TITULO_L 80
 #define PLACAR_TITULO_H 14
+
+#define PLACAR_RELOGIO_L 25
+#define PLACAR_RELOGIO_H 13
 
 #define PAUSA_TITULO_L 80
 #define PAUSA_TITULO_H 20
@@ -123,7 +129,6 @@
 #define INICIO_BOTOES_OFFSET_CIMA (MARGEM_MEDIA + INICIO_TITULO_H + 20)
 
 #define HABILIDADE_PROGRESSO_ALTURA 15
-
 #define HABILIDADE_PROGRESSO_OFFSET_DIREITA 2
 #define HABILIDADE_PROGRESSO_OFFSET_CIMA 15
 
@@ -140,6 +145,14 @@
 
 #define ESCORE_OFFSET_CIMA 3
 #define TEMPO_OFFSET_CIMA 26
+
+#define PLACAR_LISTA_MARGEM_CIMA (2 * MARGEM_MEDIA + PLACAR_TITULO_H)
+#define PLACAR_LISTA_MARGEM_BAIXO MARGEM_GRANDE
+
+#define PLACAR_LINHAS 5
+#define PLACAR_COLUNAS 2
+
+#define PLACAR_LINHA_GROSSURA 1
 
 #define BALAO_0_LIMITE 6
 #define BALAO_1_LIMITE 9
@@ -174,7 +187,10 @@
 
 #define COR_PRETO al_map_rgb(0, 0, 0)
 #define COR_BRANCO al_map_rgb(255, 255, 255)
-#define COR_PROGRESSO al_map_rgb(121, 240, 8)
+#define COR_TRANSPARENTE al_map_rgba(0, 0, 0, 0)
+#define COR_PLACAR_LINHA al_map_rgb(255, 185, 185)
+#define COR_PLACAR_TEMPO al_map_rgb(32, 232, 32)
+#define COR_HABILIDADE_PROGRESSO al_map_rgb(121, 240, 8)
 #define COR_SOBREPOSICAO al_map_rgba(0, 0, 0, 210)
 
 #define ARQUIVO_RECORDES "recordes.txt"
@@ -186,6 +202,7 @@
 struct Fontes {
 	ALLEGRO_FONT *fipps_12;
 	ALLEGRO_FONT *pixelmix_8;
+	ALLEGRO_FONT *smallestpixel7_10;
 };
 
 struct Sprites {
@@ -209,6 +226,7 @@ struct Sprites {
 	ALLEGRO_BITMAP *inicio_botao_ajuda_sobre;
 
 	ALLEGRO_BITMAP *placar_titulo;
+	ALLEGRO_BITMAP *placar_relogio;
 
 	ALLEGRO_BITMAP *pausa_titulo;
 
@@ -475,6 +493,9 @@ void carregar_fontes(struct Fontes *fontes)
 
 	fontes->pixelmix_8 = al_load_font("assets/fonts/pixelmix.ttf", 8, ALLEGRO_TTF_MONOCHROME);
 	verificar_init(fontes->pixelmix_8, "pixelmix 8");
+
+	fontes->smallestpixel7_10 = al_load_font("assets/fonts/smallest_pixel-7.ttf", 10, ALLEGRO_TTF_MONOCHROME);
+	verificar_init(fontes->smallestpixel7_10, "smallestpixel7 10");
 }
 
 void carregar_sprites(struct Sprites *sprites)
@@ -500,6 +521,7 @@ void carregar_sprites(struct Sprites *sprites)
 	sprites->inicio_botao_ajuda_sobre = recortar_sprite(sprites, 93, 274, INICIO_BOTAO_MARCADOR_L, INICIO_BOTAO_MARCADOR_H);
 
 	sprites->placar_titulo = recortar_sprite(sprites, 0, 301, PLACAR_TITULO_L, PLACAR_TITULO_H);
+	sprites->placar_relogio = recortar_sprite(sprites, 162, 200, PLACAR_RELOGIO_L, PLACAR_RELOGIO_H);
 
 	sprites->pausa_titulo = recortar_sprite(sprites, 219, 25, PAUSA_TITULO_L, PAUSA_TITULO_H);
 
@@ -613,6 +635,8 @@ void criar_display(struct Tela *tela)
 
 void criar_canvas(struct Tela *tela)
 {
+	ALLEGRO_TRANSFORM transform;
+
 	float largura_janela = al_get_display_width(tela->display);
 	float altura_janela = al_get_display_height(tela->display);
 
@@ -631,6 +655,11 @@ void criar_canvas(struct Tela *tela)
 
 	tela->canvas = al_create_bitmap(tela->largura, tela->altura);
 	verificar_init(tela->canvas, "canvas");
+
+	al_identity_transform(&transform);
+	al_scale_transform(&transform, tela->escala, tela->escala);
+
+	al_use_transform(&transform);
 }
 
 void alternar_tela_cheia(struct Tela *tela)
@@ -650,14 +679,14 @@ void redimensionar_canvas(struct Tela *tela)
 void preparar_desenho(struct Tela *tela)
 {
 	al_set_target_bitmap(tela->canvas);
-	al_clear_to_color(al_map_rgba(0, 0, 0, 0));
+	al_clear_to_color(COR_TRANSPARENTE);
 }
 
 void finalizar_desenho(struct Tela *tela)
 {
 	al_set_target_backbuffer(tela->display);
 	al_clear_to_color(COR_BRANCO);
-	al_draw_scaled_bitmap(tela->canvas, 0, 0, tela->largura, tela->altura, 0, 0, tela->largura * tela->escala, tela->altura * tela->escala, 0);
+	al_draw_bitmap(tela->canvas, 0, 0, 0);
 	al_flip_display();
 }
 
@@ -820,7 +849,7 @@ void desenhar_habilidade(struct Habilidade *habilidade, struct Tela *tela)
 	int quantidade_y = centro(habilidade->botao.y, HABILIDADE_BOTAO_H, al_get_font_line_height(tela->fontes.pixelmix_8));
 
 	al_draw_bitmap(tela->sprites.fundo_progresso, habilidade->x, habilidade->y, 0);
-	al_draw_line(progresso_x, progresso_y1, progresso_x, progresso_y2, COR_PROGRESSO, 1);
+	al_draw_line(progresso_x, progresso_y1, progresso_x, progresso_y2, COR_HABILIDADE_PROGRESSO, 1);
 
 	if (habilidade->cumulativo)
 	{
@@ -1534,8 +1563,6 @@ void inserir_recorde(struct Recorde recordes[RECORDES_TAM], int escore, int temp
 			break;
 		}
 	}
-
-	salvar_recordes(recordes);
 }
 
 void inicializar_recordes(struct Recorde recordes[RECORDES_TAM])
@@ -1747,6 +1774,7 @@ void acabar_jogo(struct Jogo *jogo)
 	jogo->game_over.tempo = jogo->tempo;
 
 	inserir_recorde(jogo->recordes, jogo->escore, jogo->tempo);
+	salvar_recordes(jogo->recordes);
 
 	mudar_estado(jogo, ESTADO_GAME_OVER);
 }
@@ -1771,6 +1799,8 @@ void resetar_habilidades(struct Jogo *jogo)
 	resetar_habilidade(&jogo->desfazer);
 	resetar_habilidade(&jogo->bomba);
 	resetar_habilidade(&jogo->rotacao);
+
+	jogo->desfazer.bloqueado = true;
 }
 
 void resetar_jogo(struct Jogo *jogo)
@@ -2092,7 +2122,7 @@ void desenhar_game_over(struct GameOver *game_over, struct Tela *tela)
 	al_draw_bitmap(tela->sprites.game_over_titulo, container_x, container_y, 0);
 
 	al_draw_textf(tela->fontes.pixelmix_8, COR_BRANCO, informacao_x, informacao_y, ALLEGRO_ALIGN_LEFT, "pontos:");
-	al_draw_textf(tela->fontes.pixelmix_8, COR_BRANCO, informacao_x + GAME_OVER_L, informacao_y, ALLEGRO_ALIGN_RIGHT, "%03d", game_over->escore);
+	al_draw_textf(tela->fontes.pixelmix_8, COR_BRANCO, informacao_x + GAME_OVER_L, informacao_y, ALLEGRO_ALIGN_RIGHT, "%d", game_over->escore);
 
 	informacao_y += GAME_OVER_INFORMACAO_H;
 
@@ -2515,6 +2545,69 @@ void posicionar_placar(struct Placar *placar, struct Tela *tela)
 	placar->botao_voltar.y = BOTAO_VOLTAR_OFFSET_CIMA;
 }
 
+void desenhar_lista_recordes(struct Recorde recordes[RECORDES_TAM], struct Tela *tela)
+{
+	int lista_largura = tela->largura - MARGEM_GRANDE * 2;
+	int lista_altura = tela->altura - PLACAR_LISTA_MARGEM_CIMA - PLACAR_LISTA_MARGEM_BAIXO;
+
+	int lista_x = centro(0, tela->largura, lista_largura);
+	int lista_y = centro(0, tela->altura, lista_altura);
+
+	int item_largura = lista_largura / PLACAR_COLUNAS - (PLACAR_COLUNAS_ESPACO * (PLACAR_COLUNAS - 1)) / PLACAR_COLUNAS;
+	int item_altura = lista_altura / PLACAR_LINHAS;
+
+	for (int i = 0; i < PLACAR_LINHAS; i++)
+	{
+		for (int j = 0; j < PLACAR_COLUNAS; j++)
+		{
+			int indice = j * PLACAR_LINHAS + i;
+			int posicao = indice + 1;
+
+			if (indice < RECORDES_TAM)
+			{
+				struct Recorde *recorde = &recordes[indice];
+
+				int item_x = lista_x + (item_largura + PLACAR_COLUNAS_ESPACO) * j;
+				int item_y = lista_y + item_altura * i;
+
+				int linha_x = item_x;
+				int linha_y = item_y + item_altura;
+
+				int conteudo_x = linha_x;
+				int conteudo_y = linha_y - PLACAR_LINHA_GROSSURA - PLACAR_CONTEUDO_ESPACO;
+
+				int texto_x = conteudo_x;
+				int texto_y = conteudo_y - al_get_font_line_height(tela->fontes.pixelmix_8);
+
+				al_draw_line(linha_x, linha_y, linha_x + item_largura, linha_y, COR_PLACAR_LINHA, PLACAR_LINHA_GROSSURA);
+
+				if (!recorde->vago)
+				{
+					int total_segundos = recorde->tempo * PERIODO_TICK;
+
+					int minutos = total_segundos / 60;
+					int segundos = total_segundos % 60;
+
+					int relogio_x = conteudo_x + item_largura - PLACAR_RELOGIO_L;
+					int relogio_y = conteudo_y - PLACAR_RELOGIO_H;
+
+					int tempo_x = relogio_x + PLACAR_RELOGIO_L / 2;
+					int tempo_y = centro(relogio_y, PLACAR_RELOGIO_H, al_get_font_line_height(tela->fontes.smallestpixel7_10));
+
+					al_draw_bitmap(tela->sprites.placar_relogio, relogio_x, relogio_y, 0);
+
+					al_draw_textf(tela->fontes.pixelmix_8, COR_PRETO, texto_x, texto_y, ALLEGRO_ALIGN_LEFT, "%d. %d", posicao, recorde->escore);
+					al_draw_textf(tela->fontes.smallestpixel7_10, COR_PLACAR_TEMPO, tempo_x + 1, tempo_y, ALLEGRO_ALIGN_CENTER, "%02d:%02d", minutos, segundos);
+				}
+				else
+				{
+					al_draw_textf(tela->fontes.pixelmix_8, COR_PRETO, texto_x, texto_y, ALLEGRO_ALIGN_LEFT, "%d.", posicao, recorde->escore);
+				}
+			}
+		}
+	}
+}
+
 void cena_placar(struct Tela *tela, struct Sistema *sistema, ALLEGRO_EVENT *evento)
 {
 	switch (evento->type)
@@ -2544,7 +2637,7 @@ void cena_placar(struct Tela *tela, struct Sistema *sistema, ALLEGRO_EVENT *even
 
 		al_draw_bitmap(tela->sprites.placar_titulo, centro(0, tela->largura, PLACAR_TITULO_L), MARGEM_MEDIA, 0);
 		desenhar_botao(&sistema->placar.botao_voltar);
-
+		desenhar_lista_recordes(sistema->jogo.recordes, tela);
 		desenhar_borda_decorativa(tela);
 
 		finalizar_desenho(tela);
