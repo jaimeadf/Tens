@@ -167,6 +167,7 @@
 #define ESTADO_PAUSADO 1
 #define ESTADO_GAME_OVER 2
 
+#define SEM_DIRECAO -1
 #define DIRECAO_LINHA 0
 #define DIRECAO_COLUNA 1
 
@@ -194,6 +195,7 @@
 #define COR_SOBREPOSICAO al_map_rgba(0, 0, 0, 210)
 
 #define ARQUIVO_RECORDES "recordes.txt"
+#define ARQUIVO_SAVE "save.txt"
 
 #define DADO_VAZIO -1
 
@@ -626,7 +628,7 @@ void criar_display(struct Tela *tela)
 	}
 	else
 	{
-		al_set_new_display_flags(ALLEGRO_WINDOWED | ALLEGRO_RESIZABLE | ALLEGRO_MAXIMIZED);
+		al_set_new_display_flags(ALLEGRO_WINDOWED | ALLEGRO_RESIZABLE);
 	}
 
 	tela->display = al_create_display(1280, 720);
@@ -1089,6 +1091,7 @@ void resetar_quadro(struct Quadro *quadro)
 			quadro->dados[i][j].animacao = ANIMACAO_PARADO;
 			quadro->dados[i][j].ticks = 0;
 			quadro->dados[i][j].atraso = 0;
+			quadro->dados[i][j].direcao = SEM_DIRECAO;
 			quadro->dados[i][j].cor = 0;
 			quadro->dados[i][j].valor = DADO_VAZIO;
 		}
@@ -1575,6 +1578,290 @@ void inicializar_recordes(struct Recorde recordes[RECORDES_TAM])
 	}
 
 	carregar_recordes(recordes);
+}
+
+bool existe_jogo_salvo()
+{
+	FILE *arquivo = fopen(ARQUIVO_SAVE, "r");
+
+	if (arquivo != NULL)
+	{
+		fclose(arquivo);
+		return true;
+	}
+
+	return false;
+}
+
+void escrever_habilidade(FILE *arquivo, struct Habilidade *habilidade)
+{
+	fprintf(arquivo, "%d %d %d\n", habilidade->bloqueado, habilidade->progresso, habilidade->quantidade);
+}
+
+bool ler_habilidade(FILE *arquivo, struct Habilidade *habilidade)
+{
+	int bloqueado, progresso, quantidade;
+
+	if (fscanf(arquivo, "%d %d %d", &bloqueado, &progresso, &quantidade) != 3)
+	{
+		return false;
+	}
+
+	habilidade->bloqueado = bloqueado;
+	habilidade->progresso = progresso;
+	habilidade->quantidade = quantidade;
+
+	return true;
+}
+
+void escrever_quadro(FILE *arquivo, struct Quadro *quadro)
+{
+	fprintf(arquivo, "%d\n", quadro->concluido);
+
+	for (int i = 0; i < QUADRO_TAM; i++)
+	{
+		for (int j = 0; j < QUADRO_TAM; j++)
+		{
+			struct Dado *dado = &quadro->dados[i][j];
+
+			fprintf(
+				arquivo,
+				"%d %d %d %d %d %d\n",
+				dado->animacao,
+				dado->ticks,
+				dado->atraso,
+				dado->direcao,
+				dado->cor,
+				dado->valor
+			);
+		}
+	}
+}
+
+bool ler_quadro(FILE *arquivo, struct Quadro *quadro)
+{
+	int concluido;
+
+	if (fscanf(arquivo, "%d\n", &concluido) != 1)
+	{
+		return false;
+	}
+
+	quadro->concluido = concluido;
+
+	for (int i = 0; i < QUADRO_TAM; i++)
+	{
+		quadro->soma_linhas[i] = 0;
+		quadro->soma_colunas[i] = 0;
+	}
+
+	for (int i = 0; i < QUADRO_TAM; i++)
+	{
+		for (int j = 0; j < QUADRO_TAM; j++)
+		{
+			struct Dado *dado = &quadro->dados[i][j];
+			int lidos = fscanf(
+				arquivo,
+				"%d %d %d %d %d %d\n",
+				&dado->animacao,
+				&dado->ticks,
+				&dado->atraso,
+				&dado->direcao,
+				&dado->cor,
+				&dado->valor
+			);
+
+			if (lidos != 6)
+			{
+				return false;
+			}
+
+			if (dado->valor != DADO_VAZIO)
+			{
+				quadro->soma_linhas[i] += dado->valor;
+				quadro->soma_linhas[j] += dado->valor;
+			}
+		}
+	}
+
+	return true;
+}
+
+void escrever_peca(FILE *arquivo, struct Peca *peca)
+{
+	fprintf(arquivo, "%d %d %d", peca->cor, peca->linhas, peca->colunas);
+
+	for (int i = 0; i < peca->linhas; i++)
+	{
+		for (int j = 0; j < peca->colunas; j++)
+		{
+			fprintf(arquivo, " %d", peca->dados[i][j]);
+		}
+	}
+
+	fprintf(arquivo, "\n");
+}
+
+bool ler_peca(FILE *arquivo, struct Peca *peca)
+{
+	if (fscanf(arquivo, "%d %d %d", &peca->cor, &peca->linhas, &peca->colunas) != 3)
+	{
+		return false;
+	}
+
+	for (int i = 0; i < peca->linhas; i++)
+	{
+		for (int j = 0; j < peca->colunas; j++)
+		{
+			if (fscanf(arquivo, " %d", &peca->dados[i][j]) != 1)
+			{
+				return false;
+			}
+		}
+	}
+
+	return true;
+}
+
+void escrever_slot(FILE *arquivo, struct Slot *slot)
+{
+	fprintf(arquivo, "%d %d ", slot->ocupado, slot->rotacionando);
+	escrever_peca(arquivo, &slot->peca);
+}
+
+bool ler_slot(FILE *arquivo, struct Slot *slot)
+{
+	int ocupado, rotacionando;
+	
+	if (fscanf(arquivo, "%d %d ", &ocupado, &rotacionando) != 2)
+	{
+		return false;
+	}
+
+	slot->ocupado = ocupado;
+	slot->rotacionando = rotacionando;
+
+	if (!ler_peca(arquivo, &slot->peca))
+	{
+		return false;
+	}
+
+	return true;
+}
+
+void escrever_jogada(FILE *arquivo, struct Jogada *jogada)
+{
+	fprintf(arquivo, "%d %d %d ", jogada->indice_origem, jogada->linha, jogada->coluna);
+	escrever_peca(arquivo, &jogada->peca);
+}
+
+bool ler_jogada(FILE *arquivo, struct Jogada *jogada)
+{
+	if (fscanf(arquivo, "%d %d %d ", &jogada->indice_origem, &jogada->linha, &jogada->coluna) != 3)
+	{
+		return false;
+	}
+
+	ler_peca(arquivo, &jogada->peca);
+
+	return true;
+}
+
+void escrever_jogo(FILE *arquivo, struct Jogo *jogo)
+{
+	fprintf(arquivo, "%d %d %d\n\n", jogo->escore, jogo->tempo, jogo->combo);
+
+	escrever_habilidade(arquivo, &jogo->desfazer);
+	escrever_habilidade(arquivo, &jogo->bomba);
+	escrever_habilidade(arquivo, &jogo->rotacao);
+	fprintf(arquivo, "\n");
+
+	escrever_quadro(arquivo, &jogo->quadro);
+	fprintf(arquivo, "\n");
+
+	for (int i = 0; i < SLOTS_TAM; i++)
+	{
+		escrever_slot(arquivo, &jogo->slots[i]);
+	}
+
+	fprintf(arquivo, "\n");
+
+	escrever_jogada(arquivo, &jogo->jogada);
+
+	fclose(arquivo);
+}
+
+bool ler_jogo(FILE *arquivo, struct Jogo *jogo)
+{
+	jogo->estado = ESTADO_RODANDO;
+	jogo->slot_selecionado = -1;
+
+	if (fscanf(arquivo, "%d %d %d\n\n", &jogo->escore, &jogo->tempo, &jogo->combo) != 3)
+	{
+		return false;
+	}
+
+	if (!ler_habilidade(arquivo, &jogo->desfazer))
+	{
+		return false;
+	}
+	
+	if (!ler_habilidade(arquivo, &jogo->bomba))
+	{
+		return false;
+	}
+
+
+	if (!ler_habilidade(arquivo, &jogo->rotacao))
+	{
+		return false;
+	}
+
+	
+	if (!ler_quadro(arquivo, &jogo->quadro))
+	{
+		return false;
+	}
+
+	for (int i = 0; i < SLOTS_TAM; i++)
+	{
+		if (!ler_slot(arquivo, &jogo->slots[i]))
+		{
+			return false;
+		}
+	}
+
+	if (!ler_jogada(arquivo, &jogo->jogada))
+	{
+		return false;
+	}
+
+	return true;
+}
+
+bool carregar_jogo(struct Jogo *jogo)
+{
+	FILE *arquivo = fopen(ARQUIVO_SAVE, "r");
+	bool sucesso = false;
+
+	if (arquivo != NULL)
+	{
+		sucesso = ler_jogo(arquivo, jogo);
+		fclose(arquivo);
+	}
+
+	return sucesso;
+}
+
+void salvar_jogo(struct Jogo *jogo)
+{
+	FILE *arquivo = fopen(ARQUIVO_SAVE, "w");
+
+	if (arquivo != NULL)
+	{
+		escrever_jogo(arquivo, jogo);
+		fclose(arquivo);
+	}
 }
 
 void mudar_estado(struct Jogo *jogo, int estado)
@@ -2309,6 +2596,7 @@ void controlar_jogo_pausado(struct Tela *tela, struct Sistema *sistema, ALLEGRO_
 
 			if (pressionar_botao(&sistema->jogo.pausa.botao_sair_e_salvar))
 			{
+				salvar_jogo(&sistema->jogo);
 				sair_do_jogo(sistema);
 				soltar_botao(&sistema->jogo.pausa.botao_sair_e_salvar);
 			}
@@ -2484,6 +2772,17 @@ void cena_inicio(struct Tela *tela, struct Sistema *sistema, ALLEGRO_EVENT *even
 			break;
 		}
 		case ALLEGRO_EVENT_MOUSE_BUTTON_DOWN:
+			if (pressionar_botao(&sistema->inicio.botao_continuar_jogo))
+			{
+				if (!carregar_jogo(&sistema->jogo))
+				{
+					resetar_jogo(&sistema->jogo);
+				}
+
+				transicionar_para_cena(sistema, CENA_JOGO);
+				soltar_botao(&sistema->inicio.botao_novo_jogo);
+			}
+
 			if (pressionar_botao(&sistema->inicio.botao_novo_jogo))
 			{
 				resetar_jogo(&sistema->jogo);
@@ -2517,6 +2816,7 @@ void cena_inicio(struct Tela *tela, struct Sistema *sistema, ALLEGRO_EVENT *even
 		preparar_desenho(tela);
 		
 		al_draw_bitmap(tela->sprites.inicio_titulo, centro(0, tela->largura, INICIO_TITULO_L), MARGEM_MEDIA, 0);
+
 		desenhar_botao(&sistema->inicio.botao_continuar_jogo);
 		desenhar_botao(&sistema->inicio.botao_novo_jogo);
 		desenhar_botao(&sistema->inicio.botao_sair);
