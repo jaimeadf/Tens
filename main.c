@@ -450,8 +450,6 @@ struct Jogo {
 
 	struct Jogada jogada;
 
-	struct Recorde recordes[RECORDES_TAM];
-
 	struct Botao botao_pausar;
 
 	struct Pausa pausa;
@@ -468,6 +466,8 @@ struct Sistema {
 	struct Inicio inicio;
 	struct Placar placar;
 	struct Ajuda ajuda;
+
+	struct Recorde recordes[RECORDES_TAM];
 
 	struct Jogo jogo;
 };
@@ -692,11 +692,6 @@ void finalizar_desenho(struct Tela *tela)
 	al_flip_display();
 }
 
-void transicionar_para_cena(struct Sistema *sistema, int cena)
-{
-	sistema->cena = cena;
-}
-
 void detectar_sobre_botao(struct Botao *botao, int px, int py)
 {
 	botao->sobre = colisao_retangulo(botao->x, botao->y, botao->largura, botao->altura, px, py);
@@ -723,6 +718,13 @@ bool soltar_botao(struct Botao *botao)
 	return false;
 }
 
+void resetar_botao(struct Botao *botao)
+{
+	botao->desabilitado = false;
+	botao->sobre = false;
+	botao->pressionado = false;
+}
+
 void inicializar_botao(struct Botao *botao, int largura, int altura)
 {
 	botao->x = 0;
@@ -731,14 +733,12 @@ void inicializar_botao(struct Botao *botao, int largura, int altura)
 	botao->largura = largura;
 	botao->altura = altura;
 
-	botao->desabilitado = false;
-	botao->sobre = false;
-	botao->pressionado = false;
-
 	botao->sprite_padrao = NULL;
 	botao->sprite_sobre = NULL;
 	botao->sprite_pressionado = NULL;
 	botao->sprite_desabilitado = NULL;
+
+	resetar_botao(botao);
 }
 
 void desenhar_botao(struct Botao *botao)
@@ -763,6 +763,81 @@ void desenhar_botao(struct Botao *botao)
 	}
 
 	al_draw_bitmap(sprite, botao->x, botao->y, 0);
+}
+
+bool comparar_recorde(struct Recorde *recorde, int escore, int tempo)
+{
+	return recorde->vago || escore > recorde->escore || escore == recorde->escore && tempo < recorde->tempo;
+}
+
+void carregar_recordes(struct Recorde recordes[RECORDES_TAM])
+{
+	FILE *arquivo = fopen(ARQUIVO_RECORDES, "r");
+
+	if (arquivo)
+	{
+		for (int i = 0; i < RECORDES_TAM; i++)
+		{
+			int vago, escore, tempo;
+			int resultado = fscanf(arquivo, "%d %d %d\n", &vago, &escore, &tempo);
+
+			if (resultado == 3)
+			{
+				recordes[i].vago = vago;
+				recordes[i].escore = escore;
+				recordes[i].tempo = tempo;
+			}
+		}
+
+		fclose(arquivo);
+	}
+}
+
+void salvar_recordes(struct Recorde recordes[RECORDES_TAM])
+{
+	FILE *arquivo = fopen(ARQUIVO_RECORDES, "w");
+
+	if (arquivo)
+	{
+		for (int i = 0; i < RECORDES_TAM; i++)
+		{
+			fprintf(arquivo, "%d %d %d\n", recordes[i].vago, recordes[i].escore, recordes[i].tempo);
+		}
+
+		fclose(arquivo);
+	}
+}
+
+void inserir_recorde(struct Recorde recordes[RECORDES_TAM], int escore, int tempo)
+{
+	for (int i = 0; i < RECORDES_TAM; i++)
+	{
+		if (comparar_recorde(&recordes[i], escore, tempo))
+		{
+			for (int j = RECORDES_TAM - 1; j > i; j--)
+			{
+				recordes[j] = recordes[j - 1];
+			}
+
+			recordes[i].vago = false;
+			recordes[i].escore = escore;
+			recordes[i].tempo = tempo;
+
+			break;
+		}
+	}
+}
+
+void inicializar_recordes(struct Recorde recordes[RECORDES_TAM])
+{
+	for (int i = 0; i < RECORDES_TAM; i++)
+	{
+		recordes[i].vago = true;
+		recordes[i].escore = 0;
+		recordes[i].tempo = 0;
+	}
+
+	carregar_recordes(recordes);
 }
 
 void acumular_habilidade(struct Habilidade *habilidade, int parte)
@@ -1182,9 +1257,9 @@ void desenhar_quadro(struct Quadro *quadro, struct Tela *tela)
 
 void desenhar_borda_decorativa(struct Tela *tela)
 {
-	for (int i = 0; i * BORDA_DECORATIVA_L < tela->largura; i++)
+	for (int x = 0; x < tela->largura; x += BORDA_DECORATIVA_L)
 	{
-		al_draw_bitmap(tela->sprites.borda_decorativa, i * BORDA_DECORATIVA_L, tela->altura - BORDA_DECORATIVA_H, 0);
+		al_draw_bitmap(tela->sprites.borda_decorativa, x, tela->altura - BORDA_DECORATIVA_H, 0);
 	}
 }
 
@@ -1505,81 +1580,6 @@ void desenhar_slots(struct Slot slots[SLOTS_TAM], struct Tela *tela)
 	}
 }
 
-bool comparar_recorde(struct Recorde *recorde, int escore, int tempo)
-{
-	return recorde->vago || escore > recorde->escore || escore == recorde->escore && tempo < recorde->tempo;
-}
-
-void carregar_recordes(struct Recorde recordes[RECORDES_TAM])
-{
-	FILE *arquivo = fopen(ARQUIVO_RECORDES, "r");
-
-	if (arquivo)
-	{
-		for (int i = 0; i < RECORDES_TAM; i++)
-		{
-			int vago, escore, tempo;
-			int resultado = fscanf(arquivo, "%d %d %d\n", &vago, &escore, &tempo);
-
-			if (resultado == 3)
-			{
-				recordes[i].vago = vago;
-				recordes[i].escore = escore;
-				recordes[i].tempo = tempo;
-			}
-		}
-
-		fclose(arquivo);
-	}
-}
-
-void salvar_recordes(struct Recorde recordes[RECORDES_TAM])
-{
-	FILE *arquivo = fopen(ARQUIVO_RECORDES, "w");
-
-	if (arquivo)
-	{
-		for (int i = 0; i < RECORDES_TAM; i++)
-		{
-			fprintf(arquivo, "%d %d %d\n", recordes[i].vago, recordes[i].escore, recordes[i].tempo);
-		}
-
-		fclose(arquivo);
-	}
-}
-
-void inserir_recorde(struct Recorde recordes[RECORDES_TAM], int escore, int tempo)
-{
-	for (int i = 0; i < RECORDES_TAM; i++)
-	{
-		if (comparar_recorde(&recordes[i], escore, tempo))
-		{
-			for (int j = RECORDES_TAM - 1; j > i; j--)
-			{
-				recordes[j] = recordes[j - 1];
-			}
-
-			recordes[i].vago = false;
-			recordes[i].escore = escore;
-			recordes[i].tempo = tempo;
-
-			break;
-		}
-	}
-}
-
-void inicializar_recordes(struct Recorde recordes[RECORDES_TAM])
-{
-	for (int i = 0; i < RECORDES_TAM; i++)
-	{
-		recordes[i].vago = true;
-		recordes[i].escore = 0;
-		recordes[i].tempo = 0;
-	}
-
-	carregar_recordes(recordes);
-}
-
 bool existe_jogo_salvo()
 {
 	FILE *arquivo = fopen(ARQUIVO_SAVE, "r");
@@ -1679,7 +1679,7 @@ bool ler_quadro(FILE *arquivo, struct Quadro *quadro)
 			if (dado->valor != DADO_VAZIO)
 			{
 				quadro->soma_linhas[i] += dado->valor;
-				quadro->soma_linhas[j] += dado->valor;
+				quadro->soma_colunas[j] += dado->valor;
 			}
 		}
 	}
@@ -1811,12 +1811,10 @@ bool ler_jogo(FILE *arquivo, struct Jogo *jogo)
 		return false;
 	}
 
-
 	if (!ler_habilidade(arquivo, &jogo->rotacao))
 	{
 		return false;
 	}
-
 	
 	if (!ler_quadro(arquivo, &jogo->quadro))
 	{
@@ -2055,6 +2053,21 @@ bool verificar_fim_de_jogo(struct Jogo *jogo)
 	return true;
 }
 
+void preparar_inicio(struct Sistema *sistema)
+{
+	sistema->inicio.botao_continuar_jogo.desabilitado = !existe_jogo_salvo();
+}
+
+void transicionar_para_cena(struct Sistema *sistema, int cena)
+{
+	if (cena == CENA_INICIO)
+	{
+		preparar_inicio(sistema);
+	}
+
+	sistema->cena = cena;
+}
+
 void acabar_jogo(struct Jogo *jogo)
 {
 	jogo->game_over.escore = jogo->escore;
@@ -2206,7 +2219,6 @@ void inicializar_jogo(struct Jogo *jogo, struct Sprites *sprites)
 	inicializar_quadro(&jogo->quadro);
 	inicializar_slots(jogo->slots, sprites);
 	inicializar_habilidades(jogo, sprites);
-	inicializar_recordes(jogo->recordes);
 	inicializar_pausa(&jogo->pausa, sprites);
 	inicializar_game_over(&jogo->game_over, sprites);
 
@@ -2432,6 +2444,9 @@ void controlar_jogo_rodando(struct Tela *tela, struct Sistema *sistema, ALLEGRO_
 			if (verificar_fim_de_jogo(&sistema->jogo))
 			{
 				acabar_jogo(&sistema->jogo);
+
+				inserir_recorde(sistema->recordes, sistema->jogo.escore, sistema->jogo.tempo);
+				salvar_recordes(sistema->recordes);
 			}
 
 			sistema->jogo.tempo++;
@@ -2479,7 +2494,7 @@ void controlar_jogo_rodando(struct Tela *tela, struct Sistema *sistema, ALLEGRO_
 				if (pressionar_botao(&sistema->jogo.botao_pausar))
 				{
 					pausar_jogo(&sistema->jogo);
-					soltar_botao(&sistema->jogo.botao_pausar);
+					resetar_botao(&sistema->jogo.botao_pausar);
 				}
 
 				for (int i = 0; i < SLOTS_TAM; i++)
@@ -2552,7 +2567,7 @@ void controlar_jogo_rodando(struct Tela *tela, struct Sistema *sistema, ALLEGRO_
 
 			if (evento->keyboard.keycode == ALLEGRO_KEY_ESCAPE)
 			{
-				pausar_jogo(&sistema->jogo);
+				pausar_jogo(&sistema->jogo, &tela->sons);
 			}
 			break;
 	}
@@ -2579,26 +2594,26 @@ void controlar_jogo_pausado(struct Tela *tela, struct Sistema *sistema, ALLEGRO_
 			if (pressionar_botao(&sistema->jogo.pausa.botao_resumir))
 			{
 				resumir_jogo(&sistema->jogo);
-				soltar_botao(&sistema->jogo.pausa.botao_resumir);
+				resetar_botao(&sistema->jogo.pausa.botao_resumir);
 			}
 
 			if (pressionar_botao(&sistema->jogo.pausa.botao_reiniciar))
 			{
 				resetar_jogo(&sistema->jogo);
-				soltar_botao(&sistema->jogo.pausa.botao_reiniciar);
+				resetar_botao(&sistema->jogo.pausa.botao_reiniciar);
 			}
 
 			if (pressionar_botao(&sistema->jogo.pausa.botao_abandonar))
 			{
 				sair_do_jogo(sistema);
-				soltar_botao(&sistema->jogo.pausa.botao_abandonar);
+				resetar_botao(&sistema->jogo.pausa.botao_abandonar);
 			}
 
 			if (pressionar_botao(&sistema->jogo.pausa.botao_sair_e_salvar))
 			{
 				salvar_jogo(&sistema->jogo);
 				sair_do_jogo(sistema);
-				soltar_botao(&sistema->jogo.pausa.botao_sair_e_salvar);
+				resetar_botao(&sistema->jogo.pausa.botao_sair_e_salvar);
 			}
 			break;
 		case ALLEGRO_EVENT_KEY_DOWN:
@@ -2628,13 +2643,13 @@ void controlar_jogo_game_over(struct Tela *tela, struct Sistema *sistema, ALLEGR
 			if (pressionar_botao(&sistema->jogo.game_over.botao_sair))
 			{
 				sair_do_jogo(sistema);
-				soltar_botao(&sistema->jogo.game_over.botao_sair);
+				resetar_botao(&sistema->jogo.game_over.botao_sair);
 			}
 
 			if (pressionar_botao(&sistema->jogo.game_over.botao_jogar_novamente))
 			{
 				resetar_jogo(&sistema->jogo);
-				soltar_botao(&sistema->jogo.game_over.botao_jogar_novamente);
+				resetar_botao(&sistema->jogo.game_over.botao_jogar_novamente);
 			}
 			break;
 	}
@@ -2780,32 +2795,32 @@ void cena_inicio(struct Tela *tela, struct Sistema *sistema, ALLEGRO_EVENT *even
 				}
 
 				transicionar_para_cena(sistema, CENA_JOGO);
-				soltar_botao(&sistema->inicio.botao_novo_jogo);
+				resetar_botao(&sistema->inicio.botao_novo_jogo);
 			}
 
 			if (pressionar_botao(&sistema->inicio.botao_novo_jogo))
 			{
 				resetar_jogo(&sistema->jogo);
 				transicionar_para_cena(sistema, CENA_JOGO);
-				soltar_botao(&sistema->inicio.botao_novo_jogo);
+				resetar_botao(&sistema->inicio.botao_novo_jogo);
 			}
 
 			if (pressionar_botao(&sistema->inicio.botao_sair))
 			{
 				sistema->encerrar = true;
-				soltar_botao(&sistema->inicio.botao_sair);
+				resetar_botao(&sistema->inicio.botao_sair);
 			}
 
 			if (pressionar_botao(&sistema->inicio.botao_placar))
 			{
 				transicionar_para_cena(sistema, CENA_PLACAR);
-				soltar_botao(&sistema->inicio.botao_placar);
+				resetar_botao(&sistema->inicio.botao_placar);
 			}
 
 			if (pressionar_botao(&sistema->inicio.botao_ajuda))
 			{
 				transicionar_para_cena(sistema, CENA_AJUDA);
-				soltar_botao(&sistema->inicio.botao_placar);
+				resetar_botao(&sistema->inicio.botao_placar);
 			}
 
 			break;
@@ -2925,7 +2940,7 @@ void cena_placar(struct Tela *tela, struct Sistema *sistema, ALLEGRO_EVENT *even
 			if (pressionar_botao(&sistema->placar.botao_voltar))
 			{
 				transicionar_para_cena(sistema, CENA_INICIO);
-				soltar_botao(&sistema->placar.botao_voltar);
+				resetar_botao(&sistema->placar.botao_voltar);
 			}
 
 			break;
@@ -2937,7 +2952,7 @@ void cena_placar(struct Tela *tela, struct Sistema *sistema, ALLEGRO_EVENT *even
 
 		al_draw_bitmap(tela->sprites.placar_titulo, centro(0, tela->largura, PLACAR_TITULO_L), MARGEM_MEDIA, 0);
 		desenhar_botao(&sistema->placar.botao_voltar);
-		desenhar_lista_recordes(sistema->jogo.recordes, tela);
+		desenhar_lista_recordes(sistema->recordes, tela);
 		desenhar_borda_decorativa(tela);
 
 		finalizar_desenho(tela);
@@ -2972,6 +2987,7 @@ int main()
 
 	carregar_fontes(&tela.fontes);
 	carregar_sprites(&tela.sprites);
+	carregar_sons(&tela.sons);
 
 	al_register_event_source(queue, al_get_display_event_source(tela.display));
 	al_register_event_source(queue, al_get_mouse_event_source());
@@ -2983,15 +2999,18 @@ int main()
 
 	struct Sistema sistema;
 
-	sistema.cena = CENA_INICIO;
+	sistema.cena = -1;
 
 	sistema.encerrar = false;
 	sistema.reposicionar = true;
 	sistema.redesenhar = false;
 
+	inicializar_recordes(sistema.recordes);
 	inicializar_inicio(&sistema.inicio, &tela.sprites);
 	inicializar_placar(&sistema.placar, &tela.sprites);
 	inicializar_jogo(&sistema.jogo, &tela.sprites);
+
+	transicionar_para_cena(&sistema, CENA_INICIO);
 
 	al_start_timer(timer);
 
@@ -3024,7 +3043,6 @@ int main()
 				sistema.reposicionar = true;
 			}
 			break;
-
 		}
 
 		if (sistema.encerrar)
