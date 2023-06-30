@@ -673,14 +673,7 @@ bool colisao_retangulo(int x, int y, int largura, int altura, int px, int py)
 
 void criar_display(struct Tela *tela)
 {
-	if (tela->cheia)
-	{
-		al_set_new_display_flags(ALLEGRO_FULLSCREEN_WINDOW);
-	}
-	else
-	{
-		al_set_new_display_flags(ALLEGRO_WINDOWED | ALLEGRO_RESIZABLE);
-	}
+	al_set_new_display_flags(ALLEGRO_WINDOWED | ALLEGRO_RESIZABLE);
 
 	tela->display = al_create_display(1280, 720);
 	verificar_init(tela->display, "display");
@@ -718,9 +711,7 @@ void criar_canvas(struct Tela *tela)
 void alternar_tela_cheia(struct Tela *tela)
 {
 	tela->cheia = !tela->cheia;
-
-	al_destroy_display(tela->display);
-	criar_display(tela);
+	al_toggle_display_flag(tela->display, ALLEGRO_FULLSCREEN_WINDOW, tela->cheia);
 }
 
 void redimensionar_canvas(struct Tela *tela)
@@ -3162,8 +3153,6 @@ int main()
 			{
 				alternar_tela_cheia(&tela);
 				redimensionar_canvas(&tela);
-
-				al_register_event_source(queue, al_get_display_event_source(tela.display));
 
 				sistema.reposicionar = true;
 			}
