@@ -28,6 +28,9 @@
 #define COLAPSO_FRAME_PERIODO 2
 #define COLAPSO_ATRASO (3 * COLAPSO_FRAME_PERIODO)
 
+#define EXPLOSAO_FRAMES_NUM 10
+#define EXPLOSAO_FRAME_PERIODO 2
+
 #define SOMA_TAM (2 * QUADRO_TAM)
 
 #define RESERVA_AUDIO 128
@@ -288,11 +291,16 @@ struct Sprites {
 	ALLEGRO_BITMAP *colapso_linha[COLAPSO_FRAMES_NUM];
 	ALLEGRO_BITMAP *colapso_coluna[COLAPSO_FRAMES_NUM];
 
+	ALLEGRO_BITMAP *explosao[EXPLOSAO_FRAMES_NUM];
+};
+
 struct Sons {
 	ALLEGRO_SAMPLE *elefante;
 
 	ALLEGRO_SAMPLE *snap;
 	ALLEGRO_SAMPLE *pop;
+
+	ALLEGRO_SAMPLE *impacto;
 
 	ALLEGRO_SAMPLE *menu_sobre;
 	ALLEGRO_SAMPLE *menu_selecionar;
@@ -519,8 +527,8 @@ void carregar_fontes(struct Fontes *fontes)
 
 void carregar_sprites(struct Sprites *sprites)
 {
-	sprites->sheet = al_load_bitmap("assets/sprites/spritesheet.bmp");
-	verificar_init(sprites->sheet, "spritesheet.bmp");
+	sprites->sheet = al_load_bitmap("assets/sprites/spritesheet.png");
+	verificar_init(sprites->sheet, "spritesheet.png");
 
 	sprites->borda_decorativa = recortar_sprite(sprites, 140, 221, BORDA_DECORATIVA_L, BORDA_DECORATIVA_H);
 	sprites->botao_voltar_padrao = recortar_sprite(sprites, 140, 203, BOTAO_VOLTAR_L, BOTAO_VOLTAR_H);
@@ -626,6 +634,9 @@ void carregar_sons(struct Sons *sons)
 
 	sons->pop = al_load_sample("assets/sounds/pop.wav");
 	verificar_init(sons->pop, "pop.wav");
+
+	sons->impacto = al_load_sample("assets/sounds/impact.wav");
+	verificar_init(sons->impacto, "impact.wav");
 
 	sons->menu_sobre = al_load_sample("assets/sounds/hover.wav");
 	verificar_init(sons->menu_sobre, "hover.wav");
@@ -998,10 +1009,13 @@ bool colisao_quadro(struct Quadro *quadro, int px, int py)
 
 void remover_dado(struct Quadro *quadro, int linha, int coluna)
 {
+	if (quadro->dados[linha][coluna].valor != DADO_VAZIO)
+{
 	quadro->soma_linhas[linha] -= quadro->dados[linha][coluna].valor;
 	quadro->soma_colunas[coluna] -= quadro->dados[linha][coluna].valor;
 
 	quadro->dados[linha][coluna].valor = DADO_VAZIO;
+}
 }
 
 void preencher_dado(struct Quadro *quadro, int linha, int coluna, int cor, int valor)
@@ -1132,11 +1146,6 @@ void explodir(struct Quadro *quadro, int indice, int direcao)
 		int linha = direcao == DIRECAO_LINHA ? indice : i;
 		int coluna = direcao == DIRECAO_LINHA ? i : indice;
 
-		if (quadro->dados[linha][coluna].valor != DADO_VAZIO)
-		{
-			remover_dado(quadro, linha, coluna);
-		}
-
 		animar_dado(&quadro->dados[linha][coluna], ANIMACAO_EXPLOSAO, 0, direcao);
 	}
 }
@@ -1175,7 +1184,7 @@ bool verificar_colapso(struct Dado *dado)
 
 bool verificar_explosao(struct Dado *dado)
 {
-	return dado->animacao == ANIMACAO_EXPLOSAO;
+	return dado->animacao == ANIMACAO_EXPLOSAO && dado->ticks - dado->atraso >= EXPLOSAO_FRAME_PERIODO * EXPLOSAO_FRAMES_NUM;
 }
 
 int determinar_balao(int soma)
@@ -1272,6 +1281,32 @@ void desenhar_baloes_verticais(struct Quadro *quadro, struct Tela *tela)
 	}
 }
 
+void desenhar_animacao_colapso(struct Dado *dado, struct Tela *tela, int x, int y)
+{
+	if (dado->ticks < dado->atraso)
+	{
+		return;
+	}
+
+	int frame = ((dado->ticks - dado->atraso) / COLAPSO_FRAME_PERIODO) % COLAPSO_FRAMES_NUM;
+
+	if (dado->direcao == DIRECAO_LINHA)
+	{
+		al_draw_bitmap(tela->sprites.colapso_linha[frame], x, y, 0);
+	}
+	else
+	{
+		al_draw_bitmap(tela->sprites.colapso_coluna[frame], x, y, 0);
+	}
+}
+
+void desenhar_animacao_explosao(struct Dado *dado, struct Tela *tela, int x, int y)
+{
+	int frame = (dado->ticks / EXPLOSAO_FRAME_PERIODO) % EXPLOSAO_FRAMES_NUM;
+
+	al_draw_bitmap(tela->sprites.explosao[frame], x, y, 0);
+}
+
 void desenhar_quadro(struct Quadro *quadro, struct Tela *tela)
 {
 	for (int i = 0; i < QUADRO_TAM; i++)
@@ -1290,21 +1325,17 @@ void desenhar_quadro(struct Quadro *quadro, struct Tela *tela)
 				al_draw_bitmap(tela->sprites.dados[dado->cor][dado->valor], dado_x, dado_y, 0);
 			}
 
-			if (dado->animacao == ANIMACAO_COLAPSO && dado->ticks > dado->atraso)
+			switch (dado->animacao)
 			{
-				int frame = ((dado->ticks - dado->atraso) / COLAPSO_FRAME_PERIODO) % COLAPSO_FRAMES_NUM;
-
-				if (dado->direcao == DIRECAO_LINHA)
-				{
-					al_draw_bitmap(tela->sprites.colapso_linha[frame], dado_x, dado_y, 0);
+			case ANIMACAO_COLAPSO:
+				desenhar_animacao_colapso(dado, tela, dado_x, dado_y);
+				break;
+			case ANIMACAO_EXPLOSAO:
+				desenhar_animacao_explosao(dado, tela, dado_x, dado_y);
+				break;
 				}
-				else
-				{
-					al_draw_bitmap(tela->sprites.colapso_coluna[frame], dado_x, dado_y, 0);
 				}
 			}
-		}
-	}
 
 	desenhar_baloes_horizontais(quadro, tela);
 	desenhar_baloes_verticais(quadro, tela);
@@ -2037,7 +2068,6 @@ void usar_bomba(struct Jogo *jogo)
 		explodir(&jogo->quadro, indice_a, direcao_a);
 		explodir(&jogo->quadro, indice_b, direcao_b);
 
-		analisar_tabuleiro_concluido(jogo);
 		analisar_consequencias(jogo);
 
 		jogo->desfazer.bloqueado = true;
@@ -2128,9 +2158,6 @@ void acabar_jogo(struct Jogo *jogo)
 	jogo->game_over.escore = jogo->escore;
 	jogo->game_over.tempo = jogo->tempo;
 
-	inserir_recorde(jogo->recordes, jogo->escore, jogo->tempo);
-	salvar_recordes(jogo->recordes);
-
 	mudar_estado(jogo, ESTADO_GAME_OVER);
 }
 
@@ -2186,7 +2213,7 @@ void inicializar_desfazer(struct Habilidade *desfazer, struct Sprites *sprites)
 	desfazer->botao.sprite_desabilitado = sprites->habilidade_desfazer_desabilitado;
 }
 
-void inicializar_bomba(struct Habilidade *bomba, struct Sprites *sprites)
+void inicializar_bomba(struct Habilidade *bomba, struct Sprites *sprites, struct Sons *sons)
 {
 	inicializar_habilidade(bomba, BOMBA_COMBINACOES, true);
 
@@ -2194,6 +2221,8 @@ void inicializar_bomba(struct Habilidade *bomba, struct Sprites *sprites)
 	bomba->botao.sprite_sobre = sprites->habilidade_bomba_padrao;
 	bomba->botao.sprite_pressionado = sprites->habilidade_bomba_pressionado;
 	bomba->botao.sprite_desabilitado = sprites->habilidade_bomba_desabilitado;
+
+	bomba->botao.som_pressionar = sons->impacto;
 }
 
 void inicializar_rotacao(struct Habilidade *rotacao, struct Sprites *sprites)
@@ -2206,10 +2235,10 @@ void inicializar_rotacao(struct Habilidade *rotacao, struct Sprites *sprites)
 	rotacao->botao.sprite_desabilitado = sprites->habilidade_rotacao_padrao;
 }
 
-void inicializar_habilidades(struct Jogo *jogo, struct Sprites *sprites)
+void inicializar_habilidades(struct Jogo *jogo, struct Sprites *sprites, struct Sons *sons)
 {
 	inicializar_desfazer(&jogo->desfazer, sprites);
-	inicializar_bomba(&jogo->bomba, sprites);
+	inicializar_bomba(&jogo->bomba, sprites, sons);
 	inicializar_rotacao(&jogo->rotacao, sprites);
 }
 
@@ -2289,7 +2318,7 @@ void inicializar_jogo(struct Jogo *jogo, struct Sprites *sprites, struct Sons *s
 
 	inicializar_quadro(&jogo->quadro);
 	inicializar_slots(jogo->slots, sprites);
-	inicializar_habilidades(jogo, sprites);
+	inicializar_habilidades(jogo, sprites, sons);
 	inicializar_pausa(&jogo->pausa, sprites, sons);
 	inicializar_game_over(&jogo->game_over, sprites, sons);
 
@@ -2417,7 +2446,10 @@ void atualizar_quadro(struct Jogo *jogo)
 
 			if (verificar_explosao(dado))
 			{
+				remover_dado(&jogo->quadro, i, j);
+
 				dado->animacao = ANIMACAO_PARADO;
+				modificado = true;
 			}
 
 			if (verificar_colapso(dado))
@@ -2426,7 +2458,6 @@ void atualizar_quadro(struct Jogo *jogo)
 				pontuar_dado(jogo);
 
 				dado->animacao = ANIMACAO_PARADO;
-
 				modificado = true;
 			}
 		}
