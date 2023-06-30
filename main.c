@@ -624,6 +624,13 @@ void carregar_sprites(struct Sprites *sprites)
 		sprites->colapso_linha[i] = recortar_sprite(sprites, i * DADO_L, 150, DADO_L, DADO_H);;
 		sprites->colapso_coluna[i] = recortar_sprite(sprites, i * DADO_L, 175, DADO_L, DADO_H);;
 	}
+
+	for (int i = 0; i < EXPLOSAO_FRAMES_NUM; i++)
+	{
+		sprites->explosao[i] = recortar_sprite(sprites, 192 + i * DADO_L, 176, DADO_L, DADO_H);
+	}
+}
+
 void carregar_sons(struct Sons *sons)
 {
 	sons->elefante = al_load_sample("assets/sounds/elephant.wav");
@@ -951,7 +958,7 @@ void resetar_habilidade(struct Habilidade *habilidade)
 {
 	habilidade->bloqueado = false;
 
-	habilidade->quantidade = 0;
+	habilidade->quantidade = 10;
 	habilidade->progresso = 0;
 }
 
@@ -1010,12 +1017,12 @@ bool colisao_quadro(struct Quadro *quadro, int px, int py)
 void remover_dado(struct Quadro *quadro, int linha, int coluna)
 {
 	if (quadro->dados[linha][coluna].valor != DADO_VAZIO)
-{
-	quadro->soma_linhas[linha] -= quadro->dados[linha][coluna].valor;
-	quadro->soma_colunas[coluna] -= quadro->dados[linha][coluna].valor;
+	{
+		quadro->soma_linhas[linha] -= quadro->dados[linha][coluna].valor;
+		quadro->soma_colunas[coluna] -= quadro->dados[linha][coluna].valor;
 
-	quadro->dados[linha][coluna].valor = DADO_VAZIO;
-}
+		quadro->dados[linha][coluna].valor = DADO_VAZIO;
+	}
 }
 
 void preencher_dado(struct Quadro *quadro, int linha, int coluna, int cor, int valor)
@@ -1333,9 +1340,9 @@ void desenhar_quadro(struct Quadro *quadro, struct Tela *tela)
 			case ANIMACAO_EXPLOSAO:
 				desenhar_animacao_explosao(dado, tela, dado_x, dado_y);
 				break;
-				}
-				}
 			}
+		}
+	}
 
 	desenhar_baloes_horizontais(quadro, tela);
 	desenhar_baloes_verticais(quadro, tela);
