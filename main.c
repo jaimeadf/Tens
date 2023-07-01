@@ -256,7 +256,7 @@ const char *PAGINAS_AJUDA[] = {
 	"(apos 5 tabuleiros concluidos).\n\n"
 };
 
-#define NUM_PAGINAS_AJUDA (sizeof(PAGINAS_AJUDA) / sizeof(char *))
+#define NUM_PAGINAS_AJUDA (int)(sizeof(PAGINAS_AJUDA) / sizeof(char *))
 
 struct Fontes {
 	ALLEGRO_FONT *fipps_12;
@@ -3338,7 +3338,7 @@ void desenhar_lista_recordes(struct Recorde recordes[RECORDES_TAM], struct Tela 
 				}
 				else
 				{
-					al_draw_textf(tela->fontes.pixelmix_8, COR_PRETO, texto_x, texto_y, ALLEGRO_ALIGN_LEFT, "%d.", posicao, recorde->escore);
+					al_draw_textf(tela->fontes.pixelmix_8, COR_PRETO, texto_x, texto_y, ALLEGRO_ALIGN_LEFT, "%d.", posicao);
 				}
 			}
 		}
