@@ -17,6 +17,9 @@
 #define QUADRO_TAM 5
 #define SLOTS_TAM 3
 
+#define ANUNCIOS_TAM 10
+#define ANUNCIOS_TEXTO_TAM 100
+
 #define RECORDES_TAM 10
 
 #define DADOS_NUM 7
@@ -60,6 +63,11 @@
 #define DADOS_ESPACO 1
 #define BALAO_ESPACO 1
 #define SLOTS_ESPACO 1
+
+#define ANUNCIO_BONUS_ESPACO 3
+#define ANUNCIO_BONUS_PREENCHIMENTO 2
+
+#define ANUNCIO_BONUS_RAIO 2
 
 #define LARGURA_ORIGINAL 320
 #define ALTURA_ORIGINAL 180
@@ -195,12 +203,20 @@
 #define BOMBA_COMBINACOES 5
 #define ROTACAO_PONTOS 50
 
+#define BONUS_MULTILINHA 0
+#define BONUS_COMBO 1
+#define BONUS_TABULEIRO_CONCLUIDO 2
+
+#define ANUNCIO_DURACAO_TOTAL 200
+#define ANUNCIO_DURACAO_FADE 10
+
 #define COR_PRETO al_map_rgb(0, 0, 0)
 #define COR_BRANCO al_map_rgb(255, 255, 255)
 #define COR_TRANSPARENTE al_map_rgba(0, 0, 0, 0)
 #define COR_PLACAR_LINHA al_map_rgb(255, 185, 185)
 #define COR_PLACAR_TEMPO al_map_rgb(32, 232, 32)
 #define COR_HABILIDADE_PROGRESSO al_map_rgb(121, 240, 8)
+#define COR_ANUNCIO al_map_rgb(112, 0, 255)
 #define COR_SOBREPOSICAO al_map_rgba(0, 0, 0, 210)
 
 #define ARQUIVO_RECORDES "recordes.txt"
@@ -469,13 +485,23 @@ struct Jogada {
 	struct Peca peca;
 };
 
+struct Anuncio
+{
+	bool usado;
+
+	int bonus;
+
+	int pontos;
+	int combo;
+
+	int ticks;
+};
+
 struct Jogo {
 	int estado;
 
 	int escore;
 	int tempo;
-
-	int combo;
 
 	int slot_selecionado;
 
@@ -487,6 +513,8 @@ struct Jogo {
 	struct Slot slots[SLOTS_TAM];
 
 	struct Jogada jogada;
+
+	struct Anuncio anuncios[ANUNCIOS_TAM];
 
 	struct Botao botao_pausar;
 
@@ -1731,6 +1759,135 @@ void desenhar_slots(struct Slot slots[SLOTS_TAM], struct Tela *tela)
 	}
 }
 
+void criar_anuncio(struct Anuncio anuncios[ANUNCIOS_TAM], int bonus, int pontos, int linhas)
+{
+	for (int i = 0; i < ANUNCIOS_TAM; i++)
+	{
+		if (!anuncios[i].usado)
+		{
+			anuncios[i].usado = true;
+
+			anuncios[i].bonus = bonus;
+
+			anuncios[i].pontos = pontos;
+			anuncios[i].combo = linhas;
+
+			anuncios[i].ticks = 0;
+
+			return;
+		}
+	}
+}
+
+void remover_anuncio_do_topo(struct Anuncio anuncios[ANUNCIOS_TAM])
+{
+	for (int i = 0; i < ANUNCIOS_TAM - 1; i++)
+	{
+		anuncios[i] = anuncios[i + 1];
+	}
+
+	anuncios[ANUNCIOS_TAM - 1].usado = false;
+}
+
+void resetar_anuncios(struct Anuncio anuncios[ANUNCIOS_TAM])
+{
+	for (int i = 0; i < ANUNCIOS_TAM; i++)
+	{
+		anuncios[i].usado = false;
+		anuncios[i].bonus = -1;
+
+		anuncios[i].pontos = 0;
+		anuncios[i].combo = 0;
+
+		anuncios[i].ticks = 0;
+	}
+}
+
+void inicializar_anuncios(struct Anuncio anuncios[ANUNCIOS_TAM])
+{
+	resetar_anuncios(anuncios);
+}
+
+void desenhar_anuncios(struct Anuncio anuncios[ANUNCIOS_TAM], struct Tela *tela)
+{
+	struct Anuncio *anuncio = &anuncios[0];
+
+	if (!anuncio->usado)
+	{
+		return;
+	}
+
+	char texto_pontos[ANUNCIOS_TEXTO_TAM] = { 0 };
+	char texto_bonus[ANUNCIOS_TEXTO_TAM] = { 0 };
+
+	sprintf(texto_pontos, "+%d pontos", anuncio->pontos);
+
+	switch (anuncio->bonus)
+	{
+	case BONUS_MULTILINHA:
+		sprintf(texto_bonus, "multilinha");
+		break;
+	case BONUS_COMBO:
+		sprintf(texto_bonus, "%dx combo", anuncio->combo);
+		break;
+	case BONUS_TABULEIRO_CONCLUIDO:
+		sprintf(texto_bonus, "tabuleiro concluido");
+		break;
+	}
+
+	float opacidade = 1.0;
+
+	int altura_texto = al_get_font_line_height(tela->fontes.smallestpixel7_10);
+
+	int largura_pontos = al_get_text_width(tela->fontes.smallestpixel7_10, texto_pontos);
+	int largura_bonus = al_get_text_width(tela->fontes.smallestpixel7_10, texto_bonus);
+	
+	int altura_caixa = altura_texto + 2 * ANUNCIO_BONUS_PREENCHIMENTO;
+	int largura_caixa = largura_bonus + 2 * ANUNCIO_BONUS_PREENCHIMENTO;
+
+	int largura_total = largura_pontos + largura_caixa + ANUNCIO_BONUS_ESPACO;
+
+	int inicio_x = centro(0, tela->largura, largura_total);
+	int inicio_y = MARGEM_PEQUENA;
+
+	int centro_y = inicio_y + altura_texto / 2;
+
+	int pontos_x = inicio_x;
+	int pontos_y = inicio_y;
+
+	int caixa_x1 = pontos_x + largura_pontos + ANUNCIO_BONUS_ESPACO;
+	int caixa_y1 = centro_y - altura_caixa / 2;
+
+	int caixa_x2 = caixa_x1 + largura_caixa;
+	int caixa_y2 = centro_y + altura_caixa / 2;
+
+	int bonus_x = (caixa_x1 + caixa_x2) / 2;
+	int bonus_y = inicio_y;
+
+	if (anuncio->ticks < ANUNCIO_DURACAO_FADE)
+	{
+		opacidade = (float)anuncio->ticks / ANUNCIO_DURACAO_FADE;
+	}
+
+	if (anuncio->ticks > ANUNCIO_DURACAO_TOTAL - ANUNCIO_DURACAO_FADE)
+	{
+		opacidade = (float)(ANUNCIO_DURACAO_TOTAL - anuncio->ticks) / ANUNCIO_DURACAO_FADE;
+	}
+
+	ALLEGRO_COLOR cor_preto = COR_PRETO;
+	ALLEGRO_COLOR cor_branco = COR_BRANCO;
+	ALLEGRO_COLOR cor_anuncio = COR_ANUNCIO;
+
+	cor_preto.a = opacidade;
+	cor_branco.a = opacidade;
+	cor_anuncio.a = opacidade;
+
+	al_draw_text(tela->fontes.smallestpixel7_10, cor_preto, pontos_x, pontos_y, ALLEGRO_ALIGN_LEFT, texto_pontos);
+
+	al_draw_filled_rounded_rectangle(caixa_x1, caixa_y1, caixa_x2, caixa_y2, ANUNCIO_BONUS_RAIO, ANUNCIO_BONUS_RAIO, cor_anuncio);
+	al_draw_text(tela->fontes.smallestpixel7_10, cor_branco, bonus_x, bonus_y, ALLEGRO_ALIGN_CENTER, texto_bonus);
+}
+
 bool existe_jogo_salvo()
 {
 	FILE *arquivo = fopen(ARQUIVO_SAVE, "r");
@@ -1919,7 +2076,7 @@ bool ler_jogada(FILE *arquivo, struct Jogada *jogada)
 
 void escrever_jogo(FILE *arquivo, struct Jogo *jogo)
 {
-	fprintf(arquivo, "%d %d %d\n\n", jogo->escore, jogo->tempo, jogo->combo);
+	fprintf(arquivo, "%d %d\n\n", jogo->escore, jogo->tempo);
 
 	escrever_habilidade(arquivo, &jogo->desfazer);
 	escrever_habilidade(arquivo, &jogo->bomba);
@@ -1946,7 +2103,7 @@ bool ler_jogo(FILE *arquivo, struct Jogo *jogo)
 	jogo->estado = ESTADO_RODANDO;
 	jogo->slot_selecionado = -1;
 
-	if (fscanf(arquivo, "%d %d %d\n\n", &jogo->escore, &jogo->tempo, &jogo->combo) != 3)
+	if (fscanf(arquivo, "%d %d\n\n", &jogo->escore, &jogo->tempo) != 2)
 	{
 		return false;
 	}
@@ -2031,24 +2188,29 @@ void pontuar_dado(struct Jogo *jogo)
 void pontuar_tabuleiro_concluido(struct Jogo *jogo)
 {
 	acumular_habilidade(&jogo->desfazer, 1);
+	criar_anuncio(jogo->anuncios, BONUS_TABULEIRO_CONCLUIDO, PONTOS_TABULEIRO_CONCLUIDO, 0);
+
 	incrementar_score(jogo, PONTOS_TABULEIRO_CONCLUIDO);
 }
 
 void pontuar_multilinha(struct Jogo *jogo, int linhas)
 {
+	int pontos = PONTOS_MULTILINHA * (linhas - 1);
+
 	acumular_habilidade(&jogo->bomba, 1);
-	incrementar_score(jogo, PONTOS_MULTILINHA * (linhas - 1));
+	criar_anuncio(jogo->anuncios, BONUS_MULTILINHA, pontos, 0);
+
+	incrementar_score(jogo, pontos);
 }
 
 void pontuar_combo(struct Jogo *jogo, int linhas)
 {
-	acumular_habilidade(&jogo->bomba, 1);
-	incrementar_score(jogo, PONTOS_COMBO * linhas);
-}
+	int pontos = PONTOS_COMBO * linhas;
 
-void resetar_combo(struct Jogo *jogo)
-{
-	jogo->combo = 1;
+	acumular_habilidade(&jogo->bomba, 1);
+	criar_anuncio(jogo->anuncios, BONUS_COMBO, pontos, linhas + 1);
+
+	incrementar_score(jogo, pontos);
 }
 
 void registrar_jogada(struct Jogo *jogo, int slot_origem, int linha, int coluna)
@@ -2246,8 +2408,6 @@ void resetar_jogo(struct Jogo *jogo)
 	jogo->escore = 0;
 	jogo->tempo = 0;
 
-	jogo->combo = 1;
-
 	jogo->slot_selecionado = 1;
 
 	resetar_quadro(&jogo->quadro);
@@ -2371,13 +2531,12 @@ void inicializar_jogo(struct Jogo *jogo, struct Sprites *sprites, struct Sons *s
 	jogo->escore = 0;
 	jogo->tempo = 0;
 
-	jogo->combo = 1;
-
 	jogo->slot_selecionado = 1;
 
 	inicializar_quadro(&jogo->quadro);
 	inicializar_slots(jogo->slots, sprites, sons);
 	inicializar_habilidades(jogo, sprites, sons);
+	inicializar_anuncios(jogo->anuncios);
 	inicializar_pausa(&jogo->pausa, sprites, sons);
 	inicializar_game_over(&jogo->game_over, sprites, sons);
 
@@ -2536,6 +2695,21 @@ void atualizar_quadro(struct Jogo *jogo, struct Sons *sons)
 	}
 }
 
+void atualizar_anuncios(struct Jogo *jogo)
+{
+	struct Anuncio *topo = &jogo->anuncios[0];
+
+	if (topo->usado)
+	{
+		topo->ticks++;
+
+		if (topo->ticks >= ANUNCIO_DURACAO_TOTAL)
+		{
+			remover_anuncio_do_topo(jogo->anuncios);
+		}
+	}
+}
+
 void desenhar_pontuacao(struct Jogo *jogo, struct Tela *tela)
 {
 	int total_segundos = jogo->tempo * PERIODO_TICK;
@@ -2601,6 +2775,7 @@ void controlar_jogo_rodando(struct Tela *tela, struct Sistema *sistema, ALLEGRO_
 		case ALLEGRO_EVENT_TIMER:
 			atualizar_quadro(&sistema->jogo, &tela->sons);
 			atualizar_slots(&sistema->jogo);
+			atualizar_anuncios(&sistema->jogo);
 			atualizar_habilidades(&sistema->jogo);
 
 			if (verificar_fim_de_jogo(&sistema->jogo))
@@ -2718,6 +2893,11 @@ void controlar_jogo_rodando(struct Tela *tela, struct Sistema *sistema, ALLEGRO_
 			}
 			break;
 		case ALLEGRO_EVENT_KEY_DOWN:
+			if (evento->keyboard.keycode == ALLEGRO_KEY_B)
+			{
+				pontuar_tabuleiro_concluido(&sistema->jogo);
+			}
+
 			if (sistema->jogo.slot_selecionado != -1)
 			{
 				if (evento->keyboard.keycode == ALLEGRO_KEY_SPACE)
@@ -2842,6 +3022,7 @@ void cena_jogo(struct Tela *tela, struct Sistema *sistema, ALLEGRO_EVENT *evento
 
 		desenhar_quadro(&sistema->jogo.quadro, tela);
 		desenhar_slots(sistema->jogo.slots, tela);
+		desenhar_anuncios(sistema->jogo.anuncios, tela);
 		desenhar_habilidades(&sistema->jogo, tela);
 		desenhar_pontuacao(&sistema->jogo, tela);
 
