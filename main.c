@@ -212,9 +212,9 @@
 #define BOMBA_COMBINACOES 10
 #define ROTACAO_PONTOS 50
 
-#define BONUS_MULTILINHA 0
-#define BONUS_COMBO 1
-#define BONUS_TABULEIRO_CONCLUIDO 2
+#define PREMIO_MULTILINHA 0
+#define PREMIO_COMBO 1
+#define PREMIO_TABULEIRO_CONCLUIDO 2
 
 #define ANUNCIO_DURACAO_TOTAL 200
 #define ANUNCIO_DURACAO_FADE 10
@@ -532,7 +532,7 @@ struct Anuncio
 {
 	bool usado;
 
-	int bonus;
+	int premio;
 
 	int pontos;
 	int combo;
@@ -1056,7 +1056,7 @@ bool usar_habilidade(struct Habilidade *habilidade)
 	}
 
 	return false;
-}
+}		
 
 void resetar_habilidade(struct Habilidade *habilidade)
 {
@@ -1273,10 +1273,10 @@ struct Arranjos formar_arranjos(struct Quadro *quadro)
 	int atraso = 0;
 
 	while (n > 0) {
+		arranjos.sequencia++;
+
 		atraso = colapsar_somas(quadro, somas, n, atraso);
 		n = resolver_somas(quadro, somas);
-
-		arranjos.sequencia += n;
 	}
 
 	return arranjos;
@@ -1816,7 +1816,7 @@ void desenhar_slots(struct Slot slots[SLOTS_TAM], struct Tela *tela)
 	}
 }
 
-void criar_anuncio(struct Anuncio anuncios[ANUNCIOS_TAM], int bonus, int pontos, int linhas)
+void criar_anuncio(struct Anuncio anuncios[ANUNCIOS_TAM], int bonus, int pontos, int combo)
 {
 	for (int i = 0; i < ANUNCIOS_TAM; i++)
 	{
@@ -1824,10 +1824,10 @@ void criar_anuncio(struct Anuncio anuncios[ANUNCIOS_TAM], int bonus, int pontos,
 		{
 			anuncios[i].usado = true;
 
-			anuncios[i].bonus = bonus;
+			anuncios[i].premio = bonus;
 
 			anuncios[i].pontos = pontos;
-			anuncios[i].combo = linhas;
+			anuncios[i].combo = combo;
 
 			anuncios[i].ticks = 0;
 
@@ -1851,7 +1851,7 @@ void resetar_anuncios(struct Anuncio anuncios[ANUNCIOS_TAM])
 	for (int i = 0; i < ANUNCIOS_TAM; i++)
 	{
 		anuncios[i].usado = false;
-		anuncios[i].bonus = -1;
+		anuncios[i].premio = -1;
 
 		anuncios[i].pontos = 0;
 		anuncios[i].combo = 0;
@@ -1879,15 +1879,15 @@ void desenhar_anuncios(struct Anuncio anuncios[ANUNCIOS_TAM], struct Tela *tela)
 
 	sprintf(texto_pontos, "+%d pontos", anuncio->pontos);
 
-	switch (anuncio->bonus)
+	switch (anuncio->premio)
 	{
-		case BONUS_MULTILINHA:
+		case PREMIO_MULTILINHA:
 			sprintf(texto_bonus, "multilinha");
 			break;
-		case BONUS_COMBO:
+		case PREMIO_COMBO:
 			sprintf(texto_bonus, "%dx combo", anuncio->combo);
 			break;
-		case BONUS_TABULEIRO_CONCLUIDO:
+		case PREMIO_TABULEIRO_CONCLUIDO:
 			sprintf(texto_bonus, "tabuleiro concluido");
 			break;
 	}
@@ -2245,27 +2245,27 @@ void pontuar_dado(struct Jogo *jogo)
 void pontuar_tabuleiro_concluido(struct Jogo *jogo)
 {
 	acumular_habilidade(&jogo->desfazer, 1);
-	criar_anuncio(jogo->anuncios, BONUS_TABULEIRO_CONCLUIDO, PONTOS_TABULEIRO_CONCLUIDO, 0);
+	criar_anuncio(jogo->anuncios, PREMIO_TABULEIRO_CONCLUIDO, PONTOS_TABULEIRO_CONCLUIDO, 0);
 
 	incrementar_score(jogo, PONTOS_TABULEIRO_CONCLUIDO);
 }
 
-void pontuar_multilinha(struct Jogo *jogo, int linhas)
+void pontuar_multilinha(struct Jogo *jogo, int simultaneos)
 {
-	int pontos = PONTOS_MULTILINHA * (linhas - 1);
+	int pontos = PONTOS_MULTILINHA * (simultaneos - 1);
 
 	acumular_habilidade(&jogo->bomba, 1);
-	criar_anuncio(jogo->anuncios, BONUS_MULTILINHA, pontos, 0);
+	criar_anuncio(jogo->anuncios, PREMIO_MULTILINHA, pontos, 0);
 
 	incrementar_score(jogo, pontos);
 }
 
-void pontuar_combo(struct Jogo *jogo, int linhas)
+void pontuar_combo(struct Jogo *jogo, int sequencia)
 {
-	int pontos = PONTOS_COMBO * linhas;
+	int pontos = PONTOS_COMBO * (sequencia - 1);
 
 	acumular_habilidade(&jogo->bomba, 1);
-	criar_anuncio(jogo->anuncios, BONUS_COMBO, pontos, linhas + 1);
+	criar_anuncio(jogo->anuncios, PREMIO_COMBO, pontos, sequencia);
 
 	incrementar_score(jogo, pontos);
 }
@@ -2295,13 +2295,9 @@ void analisar_consequencias(struct Jogo *jogo)
 {
 	struct Arranjos arranjos = formar_arranjos(&jogo->quadro);
 
-	printf("\narranjos\n");
-	printf("origem: %d\n", arranjos.origem);
-	printf("sequencia: %d\n", arranjos.sequencia);
-
-	if (arranjos.origem <= 0)
+	if (arranjos.origem > 0)
 	{
-		return;
+		jogo->desfazer.bloqueado = true;
 	}
 
 	if (arranjos.origem > 1)
@@ -2309,7 +2305,7 @@ void analisar_consequencias(struct Jogo *jogo)
 		pontuar_multilinha(jogo, arranjos.origem);
 	}
 
-	if (arranjos.sequencia > 0)
+	if (arranjos.sequencia > 1)
 	{
 		pontuar_combo(jogo, arranjos.sequencia);
 	}
