@@ -1460,12 +1460,12 @@ void desenhar_quadro(struct Quadro *quadro, struct Tela *tela)
 
 			switch (dado->animacao)
 			{
-			case ANIMACAO_COLAPSO:
-				desenhar_animacao_colapso(dado, tela, dado_x, dado_y);
-				break;
-			case ANIMACAO_EXPLOSAO:
-				desenhar_animacao_explosao(dado, tela, dado_x, dado_y);
-				break;
+				case ANIMACAO_COLAPSO:
+					desenhar_animacao_colapso(dado, tela, dado_x, dado_y);
+					break;
+				case ANIMACAO_EXPLOSAO:
+					desenhar_animacao_explosao(dado, tela, dado_x, dado_y);
+					break;
 			}
 		}
 	}
@@ -1881,15 +1881,15 @@ void desenhar_anuncios(struct Anuncio anuncios[ANUNCIOS_TAM], struct Tela *tela)
 
 	switch (anuncio->bonus)
 	{
-	case BONUS_MULTILINHA:
-		sprintf(texto_bonus, "multilinha");
-		break;
-	case BONUS_COMBO:
-		sprintf(texto_bonus, "%dx combo", anuncio->combo);
-		break;
-	case BONUS_TABULEIRO_CONCLUIDO:
-		sprintf(texto_bonus, "tabuleiro concluido");
-		break;
+		case BONUS_MULTILINHA:
+			sprintf(texto_bonus, "multilinha");
+			break;
+		case BONUS_COMBO:
+			sprintf(texto_bonus, "%dx combo", anuncio->combo);
+			break;
+		case BONUS_TABULEIRO_CONCLUIDO:
+			sprintf(texto_bonus, "tabuleiro concluido");
+			break;
 	}
 
 	float opacidade = 1.0;
@@ -2723,24 +2723,24 @@ void atualizar_quadro(struct Jogo *jogo, struct Sons *sons)
 
 				switch (dado->animacao)
 				{
-				case ANIMACAO_COLAPSO:
-					if (duracao == 1)
-					{
-						al_play_sample(sons->pop, 1.0, 0.0, fracao_aleatoria(0.7, 1.3), ALLEGRO_PLAYMODE_ONCE, NULL);
-					}
+					case ANIMACAO_COLAPSO:
+						if (duracao == 1)
+						{
+							al_play_sample(sons->pop, 1.0, 0.0, fracao_aleatoria(0.7, 1.3), ALLEGRO_PLAYMODE_ONCE, NULL);
+						}
 
-					if (duracao == COLAPSO_FRAMES_NUM * COLAPSO_FRAME_PERIODO)
-					{
-						zerar_dado(&jogo->quadro, i, j);
-						pontuar_dado(jogo);
-					}
-					break;	
-				case ANIMACAO_EXPLOSAO:
-					if (duracao == EXPLOSAO_FRAMES_NUM * EXPLOSAO_FRAME_PERIODO)
-					{
-						zerar_dado(&jogo->quadro, i, j);
-					}
-					break;
+						if (duracao == COLAPSO_FRAMES_NUM * COLAPSO_FRAME_PERIODO)
+						{
+							zerar_dado(&jogo->quadro, i, j);
+							pontuar_dado(jogo);
+						}
+						break;	
+					case ANIMACAO_EXPLOSAO:
+						if (duracao == EXPLOSAO_FRAMES_NUM * EXPLOSAO_FRAME_PERIODO)
+						{
+							zerar_dado(&jogo->quadro, i, j);
+						}
+						break;
 				}
 			}
 		}
@@ -2994,29 +2994,32 @@ void controlar_jogo_pausado(struct Tela *tela, struct Sistema *sistema, ALLEGRO_
 			break;
 		}
 		case ALLEGRO_EVENT_MOUSE_BUTTON_DOWN:
-			if (pressionar_botao(&sistema->jogo.pausa.botao_resumir))
+			if (evento->mouse.button & 1)
 			{
-				resumir_jogo(&sistema->jogo);
-				resetar_botao(&sistema->jogo.pausa.botao_resumir);
-			}
+				if (pressionar_botao(&sistema->jogo.pausa.botao_resumir))
+				{
+					resumir_jogo(&sistema->jogo);
+					resetar_botao(&sistema->jogo.pausa.botao_resumir);
+				}
 
-			if (pressionar_botao(&sistema->jogo.pausa.botao_reiniciar))
-			{
-				resetar_jogo(&sistema->jogo);
-				resetar_botao(&sistema->jogo.pausa.botao_reiniciar);
-			}
+				if (pressionar_botao(&sistema->jogo.pausa.botao_reiniciar))
+				{
+					resetar_jogo(&sistema->jogo);
+					resetar_botao(&sistema->jogo.pausa.botao_reiniciar);
+				}
 
-			if (pressionar_botao(&sistema->jogo.pausa.botao_abandonar))
-			{
-				sair_do_jogo(sistema);
-				resetar_botao(&sistema->jogo.pausa.botao_abandonar);
-			}
+				if (pressionar_botao(&sistema->jogo.pausa.botao_abandonar))
+				{
+					sair_do_jogo(sistema);
+					resetar_botao(&sistema->jogo.pausa.botao_abandonar);
+				}
 
-			if (pressionar_botao(&sistema->jogo.pausa.botao_sair_e_salvar))
-			{
-				salvar_jogo(&sistema->jogo);
-				sair_do_jogo(sistema);
-				resetar_botao(&sistema->jogo.pausa.botao_sair_e_salvar);
+				if (pressionar_botao(&sistema->jogo.pausa.botao_sair_e_salvar))
+				{
+					salvar_jogo(&sistema->jogo);
+					sair_do_jogo(sistema);
+					resetar_botao(&sistema->jogo.pausa.botao_sair_e_salvar);
+				}
 			}
 			break;
 		case ALLEGRO_EVENT_KEY_DOWN:
@@ -3043,17 +3046,21 @@ void controlar_jogo_game_over(struct Tela *tela, struct Sistema *sistema, ALLEGR
 			break;
 		}
 		case ALLEGRO_EVENT_MOUSE_BUTTON_DOWN:
-			if (pressionar_botao(&sistema->jogo.game_over.botao_sair))
+			if (evento->mouse.button & 1)
 			{
-				sair_do_jogo(sistema);
-				resetar_botao(&sistema->jogo.game_over.botao_sair);
+				if (pressionar_botao(&sistema->jogo.game_over.botao_sair))
+				{
+					sair_do_jogo(sistema);
+					resetar_botao(&sistema->jogo.game_over.botao_sair);
+				}
+
+				if (pressionar_botao(&sistema->jogo.game_over.botao_jogar_novamente))
+				{
+					resetar_jogo(&sistema->jogo);
+					resetar_botao(&sistema->jogo.game_over.botao_jogar_novamente);
+				}
 			}
 
-			if (pressionar_botao(&sistema->jogo.game_over.botao_jogar_novamente))
-			{
-				resetar_jogo(&sistema->jogo);
-				resetar_botao(&sistema->jogo.game_over.botao_jogar_novamente);
-			}
 			break;
 	}
 }
@@ -3062,15 +3069,15 @@ void cena_jogo(struct Tela *tela, struct Sistema *sistema, ALLEGRO_EVENT *evento
 {
 	switch (sistema->jogo.estado)
 	{
-	case ESTADO_RODANDO:
-		controlar_jogo_rodando(tela, sistema, evento);
-		break;
-	case ESTADO_PAUSADO:
-		controlar_jogo_pausado(tela, sistema, evento);
-		break;
-	case ESTADO_GAME_OVER:
-		controlar_jogo_game_over(tela, sistema, evento);
-		break;
+		case ESTADO_RODANDO:
+			controlar_jogo_rodando(tela, sistema, evento);
+			break;
+		case ESTADO_PAUSADO:
+			controlar_jogo_pausado(tela, sistema, evento);
+			break;
+		case ESTADO_GAME_OVER:
+			controlar_jogo_game_over(tela, sistema, evento);
+			break;
 	}
 
 	if (sistema->redesenhar)
@@ -3201,40 +3208,43 @@ void cena_inicio(struct Tela *tela, struct Sistema *sistema, ALLEGRO_EVENT *even
 			break;
 		}
 		case ALLEGRO_EVENT_MOUSE_BUTTON_DOWN:
-			if (pressionar_botao(&sistema->inicio.botao_continuar_jogo))
+			if (evento->mouse.button & 1)
 			{
-				if (!carregar_jogo(&sistema->jogo))
+				if (pressionar_botao(&sistema->inicio.botao_continuar_jogo))
 				{
-					resetar_jogo(&sistema->jogo);
+					if (!carregar_jogo(&sistema->jogo))
+					{
+						resetar_jogo(&sistema->jogo);
+					}
+
+					transicionar_para_cena(sistema, CENA_JOGO);
+					resetar_botao(&sistema->inicio.botao_continuar_jogo);
 				}
 
-				transicionar_para_cena(sistema, CENA_JOGO);
-				resetar_botao(&sistema->inicio.botao_continuar_jogo);
-			}
+				if (pressionar_botao(&sistema->inicio.botao_novo_jogo))
+				{
+					resetar_jogo(&sistema->jogo);
+					transicionar_para_cena(sistema, CENA_JOGO);
+					resetar_botao(&sistema->inicio.botao_novo_jogo);
+				}
 
-			if (pressionar_botao(&sistema->inicio.botao_novo_jogo))
-			{
-				resetar_jogo(&sistema->jogo);
-				transicionar_para_cena(sistema, CENA_JOGO);
-				resetar_botao(&sistema->inicio.botao_novo_jogo);
-			}
+				if (pressionar_botao(&sistema->inicio.botao_sair))
+				{
+					sistema->encerrar = true;
+					resetar_botao(&sistema->inicio.botao_sair);
+				}
 
-			if (pressionar_botao(&sistema->inicio.botao_sair))
-			{
-				sistema->encerrar = true;
-				resetar_botao(&sistema->inicio.botao_sair);
-			}
+				if (pressionar_botao(&sistema->inicio.botao_placar))
+				{
+					transicionar_para_cena(sistema, CENA_PLACAR);
+					resetar_botao(&sistema->inicio.botao_placar);
+				}
 
-			if (pressionar_botao(&sistema->inicio.botao_placar))
-			{
-				transicionar_para_cena(sistema, CENA_PLACAR);
-				resetar_botao(&sistema->inicio.botao_placar);
-			}
-
-			if (pressionar_botao(&sistema->inicio.botao_ajuda))
-			{
-				transicionar_para_cena(sistema, CENA_AJUDA);
-				resetar_botao(&sistema->inicio.botao_ajuda);
+				if (pressionar_botao(&sistema->inicio.botao_ajuda))
+				{
+					transicionar_para_cena(sistema, CENA_AJUDA);
+					resetar_botao(&sistema->inicio.botao_ajuda);
+				}
 			}
 
 			break;
@@ -3353,10 +3363,13 @@ void cena_placar(struct Tela *tela, struct Sistema *sistema, ALLEGRO_EVENT *even
 			break;
 		}
 		case ALLEGRO_EVENT_MOUSE_BUTTON_DOWN:
-			if (pressionar_botao(&sistema->placar.botao_voltar))
+			if (evento->mouse.button & 1)
 			{
-				transicionar_para_cena(sistema, CENA_INICIO);
-				resetar_botao(&sistema->placar.botao_voltar);
+				if (pressionar_botao(&sistema->placar.botao_voltar))
+				{
+					transicionar_para_cena(sistema, CENA_INICIO);
+					resetar_botao(&sistema->placar.botao_voltar);
+				}
 			}
 
 			break;
@@ -3442,37 +3455,43 @@ void cena_ajuda(struct Tela *tela, struct Sistema *sistema, ALLEGRO_EVENT *event
 			break;
 		}
 		case ALLEGRO_EVENT_MOUSE_BUTTON_DOWN:
-			if (pressionar_botao(&sistema->ajuda.botao_voltar))
+			if (evento->mouse.button & 1)
 			{
-				transicionar_para_cena(sistema, CENA_INICIO);
-				resetar_botao(&sistema->ajuda.botao_voltar);
-			}
+				if (pressionar_botao(&sistema->ajuda.botao_voltar))
+				{
+					transicionar_para_cena(sistema, CENA_INICIO);
+					resetar_botao(&sistema->ajuda.botao_voltar);
+				}
 
-			if (pressionar_botao(&sistema->ajuda.botao_pagina_seguinte))
-			{
-				avancar_pagina_ajuda(&sistema->ajuda);
-			}
+				if (pressionar_botao(&sistema->ajuda.botao_pagina_seguinte))
+				{
+					avancar_pagina_ajuda(&sistema->ajuda);
+				}
 
-			if (pressionar_botao(&sistema->ajuda.botao_pagina_anterior))
-			{
-				voltar_pagina_ajuda(&sistema->ajuda);
+				if (pressionar_botao(&sistema->ajuda.botao_pagina_anterior))
+				{
+					voltar_pagina_ajuda(&sistema->ajuda);
+				}
 			}
 
 			break;
 		case ALLEGRO_EVENT_MOUSE_BUTTON_UP:
-			soltar_botao(&sistema->ajuda.botao_pagina_seguinte);
-			soltar_botao(&sistema->ajuda.botao_pagina_anterior);
+			if (evento->mouse.button & 1)
+			{
+				soltar_botao(&sistema->ajuda.botao_pagina_seguinte);
+				soltar_botao(&sistema->ajuda.botao_pagina_anterior);
+			}
 			
 			break;
 		case ALLEGRO_EVENT_KEY_CHAR:
-			if (evento->keyboard.keycode == ALLEGRO_KEY_RIGHT)
+			switch (evento->keyboard.keycode)
 			{
-				avancar_pagina_ajuda(&sistema->ajuda);
-			}
-
-			if (evento->keyboard.keycode == ALLEGRO_KEY_LEFT)
-			{
-				voltar_pagina_ajuda(&sistema->ajuda);
+				case ALLEGRO_KEY_RIGHT:
+					avancar_pagina_ajuda(&sistema->ajuda);
+					break;
+				case ALLEGRO_KEY_LEFT:
+					voltar_pagina_ajuda(&sistema->ajuda);
+					break;
 			}
 			break;
 	}
@@ -3590,27 +3609,27 @@ int main()
 
 		switch (evento.type)
 		{
-		case ALLEGRO_EVENT_TIMER:
-			redesenhar = true;
-			break;
-		case ALLEGRO_EVENT_DISPLAY_CLOSE:
-			sistema.encerrar = true;
-			break;
-		case ALLEGRO_EVENT_DISPLAY_RESIZE:
-			al_acknowledge_resize(tela.display);
-			redimensionar_canvas(&tela);
-
-			sistema.reposicionar = true;
-			break;
-		case ALLEGRO_EVENT_KEY_DOWN:
-			if (evento.keyboard.keycode == ALLEGRO_KEY_F11)
-			{
-				alternar_tela_cheia(&tela);
+			case ALLEGRO_EVENT_TIMER:
+				redesenhar = true;
+				break;
+			case ALLEGRO_EVENT_DISPLAY_CLOSE:
+				sistema.encerrar = true;
+				break;
+			case ALLEGRO_EVENT_DISPLAY_RESIZE:
+				al_acknowledge_resize(tela.display);
 				redimensionar_canvas(&tela);
 
 				sistema.reposicionar = true;
-			}
-			break;
+				break;
+			case ALLEGRO_EVENT_KEY_DOWN:
+				if (evento.keyboard.keycode == ALLEGRO_KEY_F11)
+				{
+					alternar_tela_cheia(&tela);
+					redimensionar_canvas(&tela);
+
+					sistema.reposicionar = true;
+				}
+				break;
 		}
 
 		if (sistema.encerrar)
