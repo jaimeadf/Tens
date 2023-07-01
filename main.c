@@ -31,7 +31,7 @@
 #define EXPLOSAO_FRAMES_NUM 10
 #define EXPLOSAO_FRAME_PERIODO 2
 
-#define SOMA_TAM (2 * QUADRO_TAM)
+#define SOMAS_TAM (2 * QUADRO_TAM)
 
 #define RESERVA_AUDIO 128
 
@@ -183,6 +183,8 @@
 #define ANIMACAO_PARADO 0
 #define ANIMACAO_COLAPSO 1
 #define ANIMACAO_EXPLOSAO 2
+
+#define SOMA_ALVO 10
 
 #define PONTOS_DADO 1
 #define PONTOS_COMBO 5
@@ -396,6 +398,8 @@ struct Habilidade
 };
 
 struct Dado {
+	bool livre;
+
 	int animacao;
 	
 	int ticks;
@@ -421,6 +425,12 @@ struct Soma
 {
 	int indice;
 	int direcao;
+};
+
+struct Arranjos
+{
+	int origem;
+	int sequencia;
 };
 
 struct Peca
@@ -1005,7 +1015,7 @@ bool colisao_quadro(struct Quadro *quadro, int px, int py)
 	return colisao_retangulo(quadro->x, quadro->y, QUADRO_L, QUADRO_H, px, py);
 }
 
-void remover_dado(struct Quadro *quadro, int linha, int coluna)
+void zerar_dado(struct Quadro *quadro, int linha, int coluna)
 {
 	if (quadro->dados[linha][coluna].valor != DADO_VAZIO)
 	{
@@ -1023,8 +1033,21 @@ void preencher_dado(struct Quadro *quadro, int linha, int coluna, int cor, int v
 	quadro->soma_linhas[linha] += valor;
 	quadro->soma_colunas[coluna] += valor;
 
+	quadro->dados[linha][coluna].livre = false;
+
+	quadro->dados[linha][coluna].animacao = ANIMACAO_PARADO;
+	quadro->dados[linha][coluna].direcao = SEM_DIRECAO;
+	quadro->dados[linha][coluna].atraso = 0;
+	quadro->dados[linha][coluna].ticks = 0;
+
 	quadro->dados[linha][coluna].cor = cor;
 	quadro->dados[linha][coluna].valor = valor;
+}
+
+void remover_dado(struct Quadro *quadro, int linha, int coluna)
+{
+	quadro->dados[linha][coluna].livre = true;
+	zerar_dado(quadro, linha, coluna);
 }
 
 void animar_dado(struct Dado *dado, int animacao, int atraso, int direcao)
@@ -1035,117 +1058,123 @@ void animar_dado(struct Dado *dado, int animacao, int atraso, int direcao)
 	dado->direcao = direcao;
 }
 
-bool quadro_sendo_animado(struct Quadro *quadro)
-{
-	for (int i = 0; i < QUADRO_TAM; i++)
-	{
-		for (int j = 0; j < QUADRO_TAM; j++)
-		{
-			if (quadro->dados[i][j].animacao != ANIMACAO_PARADO)
-			{
-				return true;
-			}
-		}
-	}
-
-	return false;
-}
-
-bool linha_sendo_destruida(struct Quadro *quadro, int linha)
-{
-	for (int j = 0; j < QUADRO_TAM; j++)
-	{
-		if (quadro->dados[linha][j].animacao == ANIMACAO_COLAPSO)
-		{
-			return true;
-		}
-	}
-
-	return false;
-}
-
-bool coluna_sendo_destruida(struct Quadro *quadro, int coluna)
-{
-	for (int i = 0; i < QUADRO_TAM; i++)
-	{
-		if (quadro->dados[i][coluna].animacao == ANIMACAO_COLAPSO)
-		{
-			return true;
-		}
-	}
-
-	return false;
-}
-
-int encontrar_tens(struct Quadro *quadro, struct Soma somas[])
-{
-	int n = 0;
-
-	for (int i = 0; i < QUADRO_TAM; i++)
-	{
-		if (!linha_sendo_destruida(quadro, i) && quadro->soma_linhas[i] == 10)
-		{
-			somas[n].direcao = DIRECAO_LINHA;
-			somas[n].indice = i;
-
-			n++;
-		}
-	}
-
-	for (int j = 0; j < QUADRO_TAM; j++)
-	{
-		if (!coluna_sendo_destruida(quadro, j) && quadro->soma_colunas[j] == 10)
-		{
-			somas[n].direcao = DIRECAO_COLUNA;
-			somas[n].indice = j;
-
-			n++;
-		}
-	}
-
-	return n;
-}
-
-void destruir_tens(struct Quadro *quadro, struct Soma somas[SOMA_TAM], int n)
-{
-	for (int k = 0; k < n; k++)
-	{
-		int atraso = 0;
-
-		for (int i = 0; i < QUADRO_TAM; i++)
-		{
-			struct Dado *dado = somas[k].direcao == DIRECAO_LINHA
-				? &quadro->dados[somas[k].indice][i]
-				: &quadro->dados[i][somas[k].indice];
-
-			if (dado->valor != DADO_VAZIO)
-			{
-				animar_dado(dado, ANIMACAO_COLAPSO, atraso, somas[k].direcao);
-				atraso += COLAPSO_ATRASO;
-			}
-		}
-	}
-}
-
-int formar_tens(struct Quadro *quadro)
-{
-	struct Soma somas[SOMA_TAM];
-	int n = encontrar_tens(quadro, somas);
-
-	destruir_tens(quadro, somas, n);
-
-	return n;
-}
-
-void explodir(struct Quadro *quadro, int indice, int direcao)
+void explodir_quadro(struct Quadro *quadro, int indice, int direcao)
 {
 	for (int i = 0; i < QUADRO_TAM; i++)
 	{
 		int linha = direcao == DIRECAO_LINHA ? indice : i;
 		int coluna = direcao == DIRECAO_LINHA ? i : indice;
 
-		animar_dado(&quadro->dados[linha][coluna], ANIMACAO_EXPLOSAO, 0, direcao);
+		quadro->dados[linha][coluna].livre = true;
+		animar_dado(&quadro->dados[linha][coluna], ANIMACAO_EXPLOSAO, direcao, 0);
 	}
+}
+
+int somar_dados_em_linha(struct Quadro *quadro, int linha)
+{
+	int soma = 0;
+
+	for (int j = 0; j < QUADRO_TAM; j++)
+	{
+		if (!quadro->dados[linha][j].livre)
+		{
+			soma += quadro->dados[linha][j].valor;
+		}
+	}
+
+	return soma;
+}
+
+int somar_dados_em_coluna(struct Quadro *quadro, int coluna)
+{
+	int soma = 0;
+
+	for (int i = 0; i < QUADRO_TAM; i++)
+	{
+		if (!quadro->dados[i][coluna].livre)
+		{
+			soma += quadro->dados[i][coluna].valor;
+		}
+	}
+
+	return soma;
+}
+
+int resolver_somas(struct Quadro *quadro, struct Soma somas[SOMAS_TAM])
+{
+	int n = 0;
+
+	for (int i = 0; i < QUADRO_TAM; i++)
+	{
+		if (somar_dados_em_linha(quadro, i) == SOMA_ALVO)
+		{
+			somas[n].indice = i;
+			somas[n].direcao = DIRECAO_LINHA;
+			n++;
+		}
+
+		if (somar_dados_em_coluna(quadro, i) == SOMA_ALVO)
+		{
+			somas[n].indice = i;
+			somas[n].direcao = DIRECAO_COLUNA;
+			n++;
+		}
+	}
+
+	return n;
+}
+
+int colapsar_somas(struct Quadro *quadro, struct Soma somas[SOMAS_TAM], int n, int atraso_inicial)
+{
+	int atraso_maximo = atraso_inicial;
+
+	for (int k = 0; k < n; k++)
+	{
+		int atraso = atraso_inicial;
+
+		for (int i = 0; i < QUADRO_TAM; i++)
+		{
+			int linha = somas[k].direcao == DIRECAO_LINHA ? somas[k].indice : i;
+			int coluna = somas[k].direcao == DIRECAO_LINHA ? i : somas[k].indice;
+
+			if (!quadro->dados[linha][coluna].livre)
+			{
+				quadro->dados[linha][coluna].livre = true;
+				animar_dado(&quadro->dados[linha][coluna], ANIMACAO_COLAPSO, atraso, somas[k].direcao);
+				
+				atraso += COLAPSO_ATRASO;
+			}
+		}
+
+		if (atraso > atraso_maximo)
+		{
+			atraso_maximo = atraso;
+		}
+	}
+
+	return atraso_maximo;
+}
+
+struct Arranjos formar_arranjos(struct Quadro *quadro)
+{
+	struct Arranjos arranjos;
+	struct Soma somas[SOMAS_TAM];
+
+	int n = resolver_somas(quadro, somas);
+
+	arranjos.origem = n;
+	arranjos.sequencia = 0;
+
+	int atraso = 0;
+
+	while (n > 0) {
+		atraso = colapsar_somas(quadro, somas, n, atraso);
+		n = resolver_somas(quadro, somas);
+
+		arranjos.sequencia += n;
+	}
+
+	return arranjos;
 }
 
 bool quadro_limpo(struct Quadro *quadro)
@@ -1154,7 +1183,7 @@ bool quadro_limpo(struct Quadro *quadro)
 	{
 		for (int j = 0; j < QUADRO_TAM; j++)
 		{
-			if (quadro->dados[i][j].valor != DADO_VAZIO)
+			if (!quadro->dados[i][j].livre)
 			{
 				return false;
 			}
@@ -1164,7 +1193,7 @@ bool quadro_limpo(struct Quadro *quadro)
 	return true;
 }
 
-bool restaurar_quadro_concluido(struct Quadro *quadro)
+bool verificar_quadro_concluido(struct Quadro *quadro)
 {
 	if (!quadro->concluido && quadro_limpo(quadro))
 	{
@@ -1225,6 +1254,7 @@ void resetar_quadro(struct Quadro *quadro)
 	{
 		for (int j = 0; j < QUADRO_TAM; j++)
 		{
+			quadro->dados[i][j].livre = true;
 			quadro->dados[i][j].animacao = ANIMACAO_PARADO;
 			quadro->dados[i][j].ticks = 0;
 			quadro->dados[i][j].atraso = 0;
@@ -1425,7 +1455,7 @@ bool aceita_peca(struct Quadro *quadro, struct Peca *peca, int linha, int coluna
 	{
 		for (int j = 0; j < peca->colunas; j++)
 		{
-			if (peca->dados[i][j] != DADO_VAZIO && quadro->dados[linha + i][coluna + j].valor != DADO_VAZIO)
+			if (peca->dados[i][j] != DADO_VAZIO && !quadro->dados[linha + i][coluna + j].livre)
 			{
 				return false;
 			}
@@ -1710,7 +1740,8 @@ void escrever_quadro(FILE *arquivo, struct Quadro *quadro)
 
 			fprintf(
 				arquivo,
-				"%d %d %d %d %d %d\n",
+				"%d %d %d %d %d %d %d\n",
+				dado->livre,
 				dado->animacao,
 				dado->ticks,
 				dado->atraso,
@@ -1743,27 +1774,25 @@ bool ler_quadro(FILE *arquivo, struct Quadro *quadro)
 	{
 		for (int j = 0; j < QUADRO_TAM; j++)
 		{
-			struct Dado *dado = &quadro->dados[i][j];
-			int lidos = fscanf(
-				arquivo,
-				"%d %d %d %d %d %d\n",
-				&dado->animacao,
-				&dado->ticks,
-				&dado->atraso,
-				&dado->direcao,
-				&dado->cor,
-				&dado->valor
-			);
-
-			if (lidos != 6)
+			int livre, animacao, ticks, atraso, direcao, cor, valor;
+			
+			if (fscanf(arquivo, "%d %d %d %d %d %d %d\n", &livre, &animacao, &ticks, &atraso, &direcao, &cor, &valor) != 7)
 			{
 				return false;
 			}
 
-			if (dado->valor != DADO_VAZIO)
+			quadro->dados[i][j].livre = livre;
+			quadro->dados[i][j].animacao = animacao;
+			quadro->dados[i][j].ticks = ticks;
+			quadro->dados[i][j].atraso = atraso;
+			quadro->dados[i][j].direcao = direcao;
+			quadro->dados[i][j].cor = cor;
+			quadro->dados[i][j].valor = valor;
+
+			if (valor != DADO_VAZIO)
 			{
-				quadro->soma_linhas[i] += dado->valor;
-				quadro->soma_colunas[j] += dado->valor;
+				quadro->soma_linhas[i] += valor;
+				quadro->soma_colunas[j] += valor;
 			}
 		}
 	}
@@ -1976,11 +2005,7 @@ void pontuar_multilinha(struct Jogo *jogo, int linhas)
 
 void pontuar_combo(struct Jogo *jogo, int linhas)
 {
-	if (jogo->combo == 1)
-	{
-		acumular_habilidade(&jogo->bomba, 1);
-	}
-
+	acumular_habilidade(&jogo->bomba, 1);
 	incrementar_score(jogo, PONTOS_COMBO * linhas);
 }
 
@@ -2004,35 +2029,34 @@ void desfazer_jogada(struct Jogo *jogo)
 	jogo->desfazer.bloqueado = true;
 
 	retirar_peca(&jogo->quadro, &jogo->jogada.peca, jogo->jogada.linha, jogo->jogada.coluna);
-	restaurar_quadro_concluido(&jogo->quadro);
+	verificar_quadro_concluido(&jogo->quadro);
 
 	jogo->slots[jogo->jogada.indice_origem].ocupado = true;
 	jogo->slots[jogo->jogada.indice_origem].peca = jogo->jogada.peca;
 }
 
-void analisar_tabuleiro_concluido(struct Jogo *jogo)
-{
-	if (restaurar_quadro_concluido(&jogo->quadro))
-	{
-		pontuar_tabuleiro_concluido(jogo);
-	}
-}
-
 void analisar_consequencias(struct Jogo *jogo)
 {
-	int linhas = formar_tens(&jogo->quadro);
+	struct Arranjos arranjos = formar_arranjos(&jogo->quadro);
 
-	if (linhas > 0)
+	printf("\narranjos\n");
+	printf("origem: %d\n", arranjos.origem);
+	printf("sequencia: %d\n", arranjos.sequencia);
+
+	if (arranjos.origem <= 0)
 	{
-		jogo->desfazer.bloqueado = true;
+		return;
 	}
 
-	if (linhas > 1)
+	if (arranjos.origem > 1)
 	{
-		pontuar_multilinha(jogo, linhas);
+		pontuar_multilinha(jogo, arranjos.origem);
 	}
 
-	resetar_combo(jogo);
+	if (arranjos.sequencia > 0)
+	{
+		pontuar_combo(jogo, arranjos.sequencia);
+	}
 }
 
 bool pode_usar_rotacao(struct Jogo *jogo, struct Slot *slot)
@@ -2063,8 +2087,8 @@ void usar_bomba(struct Jogo *jogo)
 			direcao_b = aleatorio(0, DIRECOES_NUM);
 		} while (direcao_a == direcao_b && indice_a == indice_b);
 
-		explodir(&jogo->quadro, indice_a, direcao_a);
-		explodir(&jogo->quadro, indice_b, direcao_b);
+		explodir_quadro(&jogo->quadro, indice_a, direcao_a);
+		explodir_quadro(&jogo->quadro, indice_b, direcao_b);
 
 		analisar_consequencias(jogo);
 
@@ -2107,11 +2131,6 @@ bool existe_espaco_disponivel_para_slot(struct Jogo *jogo, struct Slot *slot)
 
 bool verificar_fim_de_jogo(struct Jogo *jogo)
 {
-	if (quadro_sendo_animado(&jogo->quadro))
-	{
-		return false;
-	}
-
 	if (pode_usar_habilidade(&jogo->desfazer))
 	{
 		return false;
@@ -2432,8 +2451,6 @@ void atualizar_slots(struct Jogo *jogo)
 
 void atualizar_quadro(struct Jogo *jogo)
 {
-	bool modificado = false;
-
 	for (int i = 0; i < QUADRO_TAM; i++)
 	{
 		for (int j = 0; j < QUADRO_TAM; j++)
@@ -2444,33 +2461,24 @@ void atualizar_quadro(struct Jogo *jogo)
 
 			if (verificar_explosao(dado))
 			{
-				remover_dado(&jogo->quadro, i, j);
+				zerar_dado(&jogo->quadro, i, j);
 
 				dado->animacao = ANIMACAO_PARADO;
-				modificado = true;
 			}
 
 			if (verificar_colapso(dado))
 			{
-				remover_dado(&jogo->quadro, i, j);
+				zerar_dado(&jogo->quadro, i, j);
 				pontuar_dado(jogo);
 
 				dado->animacao = ANIMACAO_PARADO;
-				modificado = true;
 			}
 		}
 	}
 
-	if (modificado)
+	if (verificar_quadro_concluido(&jogo->quadro))
 	{
-		int linhas = formar_tens(&jogo->quadro);
-
-		if (linhas > 0)
-		{
-			pontuar_combo(jogo, linhas);
-		}
-
-		analisar_tabuleiro_concluido(jogo);
+		pontuar_tabuleiro_concluido(jogo);
 	}
 }
 
