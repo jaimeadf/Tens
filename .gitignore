@@ -1,5 +1,7 @@
-bin/
-packages/
 .vs/
 .vscode/
+bin/
+packages/
 *.user
+data/
+assets/
