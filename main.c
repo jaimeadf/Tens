@@ -299,13 +299,15 @@ struct Sprites {
 struct Sons {
 	ALLEGRO_SAMPLE *elefante;
 
-	ALLEGRO_SAMPLE *snap;
 	ALLEGRO_SAMPLE *pop;
+	ALLEGRO_SAMPLE *snap;
+	ALLEGRO_SAMPLE *pluck;
 
 	ALLEGRO_SAMPLE *impacto;
 
-	ALLEGRO_SAMPLE *menu_sobre;
-	ALLEGRO_SAMPLE *menu_selecionar;
+	ALLEGRO_SAMPLE *botao_sobre;
+	ALLEGRO_SAMPLE *botao_selecionar;
+	ALLEGRO_SAMPLE *botao_bloqueado;
 };
 
 struct Tela {
@@ -340,6 +342,7 @@ struct Botao {
 
 	ALLEGRO_SAMPLE *som_sobre;
 	ALLEGRO_SAMPLE *som_pressionar;
+	ALLEGRO_SAMPLE *som_desabilitado;
 };
 
 struct Inicio {
@@ -646,20 +649,23 @@ void carregar_sons(struct Sons *sons)
 	sons->elefante = al_load_sample("assets/sounds/elephant.wav");
 	verificar_init(sons->elefante, "elephant.wav");
 
-	sons->snap = al_load_sample("assets/sounds/snap.wav");
-	verificar_init(sons->snap, "snap.wav");
-
 	sons->pop = al_load_sample("assets/sounds/pop.wav");
 	verificar_init(sons->pop, "pop.wav");
+
+	sons->snap = al_load_sample("assets/sounds/snap.wav");
+	verificar_init(sons->snap, "snap.wav");
 
 	sons->impacto = al_load_sample("assets/sounds/impact.wav");
 	verificar_init(sons->impacto, "impact.wav");
 
-	sons->menu_sobre = al_load_sample("assets/sounds/hover.wav");
-	verificar_init(sons->menu_sobre, "hover.wav");
+	sons->botao_sobre = al_load_sample("assets/sounds/hover.wav");
+	verificar_init(sons->botao_sobre, "hover.wav");
 
-	sons->menu_selecionar = al_load_sample("assets/sounds/select.wav");
-	verificar_init(sons->menu_selecionar, "select.wav");
+	sons->botao_selecionar = al_load_sample("assets/sounds/select.wav");
+	verificar_init(sons->botao_selecionar, "select.wav");
+
+	sons->botao_bloqueado = al_load_sample("assets/sounds/blocked.wav");
+	verificar_init(sons->botao_sobre, "blocked.wav");
 }
 
 int inteiro_aleatorio(int minimo, int maximo)
@@ -773,14 +779,25 @@ void detectar_sobre_botao(struct Botao *botao, int px, int py)
 
 bool pressionar_botao(struct Botao *botao)
 {
-	if (botao->sobre && !botao->pressionado && !botao->desabilitado)
+	if (botao->sobre)
 	{
-		botao->pressionado = true;
-
-		if (botao->som_pressionar)
+		if (!botao->desabilitado)
 		{
-			al_play_sample(botao->som_pressionar, 1.0, 0.0, 1.0, ALLEGRO_PLAYMODE_ONCE, NULL);
+			botao->pressionado = true;
+
+			if (botao->som_pressionar)
+			{
+				al_play_sample(botao->som_pressionar, 1.0, 0.0, 1.0, ALLEGRO_PLAYMODE_ONCE, NULL);
+			}
 		}
+		else
+		{
+			if (botao->som_desabilitado)
+			{
+				al_play_sample(botao->som_desabilitado, 1.0, 0.0, 1.0, ALLEGRO_PLAYMODE_ONCE, NULL);
+			}
+		}
+		
 	}
 
 	return botao->pressionado;
@@ -819,6 +836,7 @@ void inicializar_botao(struct Botao *botao, int largura, int altura)
 
 	botao->som_sobre = NULL;
 	botao->som_pressionar = NULL;
+	botao->som_desabilitado = NULL;
 
 	resetar_botao(botao);
 }
@@ -967,7 +985,7 @@ void resetar_habilidade(struct Habilidade *habilidade)
 {
 	habilidade->bloqueado = false;
 
-	habilidade->quantidade = 10;
+	habilidade->quantidade = 0;
 	habilidade->progresso = 0;
 }
 
@@ -1610,7 +1628,7 @@ void resetar_slot(struct Slot *slot)
 	gerar_slot(slot);
 }
 
-void inicializar_slot(struct Slot *slot, struct Sprites *sprites)
+void inicializar_slot(struct Slot *slot, struct Sprites *sprites, struct Sons *sons)
 {
 	slot->x = 0;
 	slot->y = 0;
@@ -1622,6 +1640,8 @@ void inicializar_slot(struct Slot *slot, struct Sprites *sprites)
 
 	slot->botao_rotacionar.sprite_desabilitado = sprites->botao_rotacionar_desabilitado;
 	slot->botao_rotacionar.sprite_pressionado = sprites->botao_rotacionar_ativo_pressionado;
+
+	slot->botao_rotacionar.som_desabilitado = sons->botao_bloqueado;
 
 	resetar_slot(slot);
 }
@@ -1676,11 +1696,11 @@ void resetar_slots(struct Slot slots[SLOTS_TAM])
 	}
 }
 
-void inicializar_slots(struct Slot slots[SLOTS_TAM], struct Sprites *sprites)
+void inicializar_slots(struct Slot slots[SLOTS_TAM], struct Sprites *sprites, struct Sons *sons)
 {
 	for (int i = 0; i < SLOTS_TAM; i++)
 	{
-		inicializar_slot(&slots[i], sprites);
+		inicializar_slot(&slots[i], sprites, sons);
 	}
 }
 
@@ -2228,7 +2248,7 @@ void resetar_jogo(struct Jogo *jogo)
 	resetar_habilidades(jogo);
 }
 
-void inicializar_desfazer(struct Habilidade *desfazer, struct Sprites *sprites)
+void inicializar_desfazer(struct Habilidade *desfazer, struct Sprites *sprites, struct Sons *sons)
 {
 	inicializar_habilidade(desfazer, DESFAZER_TABULEIROS_CONCLUIDOS, false);
 
@@ -2238,6 +2258,8 @@ void inicializar_desfazer(struct Habilidade *desfazer, struct Sprites *sprites)
 	desfazer->botao.sprite_sobre = sprites->habilidade_desfazer_padrao;
 	desfazer->botao.sprite_pressionado = sprites->habilidade_desfazer_pressionado;
 	desfazer->botao.sprite_desabilitado = sprites->habilidade_desfazer_desabilitado;
+
+	desfazer->botao.som_desabilitado = sons->botao_bloqueado;
 }
 
 void inicializar_bomba(struct Habilidade *bomba, struct Sprites *sprites, struct Sons *sons)
@@ -2250,6 +2272,7 @@ void inicializar_bomba(struct Habilidade *bomba, struct Sprites *sprites, struct
 	bomba->botao.sprite_desabilitado = sprites->habilidade_bomba_desabilitado;
 
 	bomba->botao.som_pressionar = sons->impacto;
+	bomba->botao.som_desabilitado = sons->botao_bloqueado;
 }
 
 void inicializar_rotacao(struct Habilidade *rotacao, struct Sprites *sprites)
@@ -2264,7 +2287,7 @@ void inicializar_rotacao(struct Habilidade *rotacao, struct Sprites *sprites)
 
 void inicializar_habilidades(struct Jogo *jogo, struct Sprites *sprites, struct Sons *sons)
 {
-	inicializar_desfazer(&jogo->desfazer, sprites);
+	inicializar_desfazer(&jogo->desfazer, sprites, sons);
 	inicializar_bomba(&jogo->bomba, sprites, sons);
 	inicializar_rotacao(&jogo->rotacao, sprites);
 }
@@ -2281,32 +2304,32 @@ void inicializar_pausa(struct Pausa *pausa, struct Sprites *sprites, struct Sons
 	pausa->botao_resumir.sprite_pressionado = sprites->pausa_botao_resumir_padrao;
 	pausa->botao_resumir.sprite_desabilitado = sprites->pausa_botao_resumir_padrao;
 
-	pausa->botao_resumir.som_sobre = sons->menu_sobre;
-	pausa->botao_resumir.som_pressionar = sons->menu_selecionar;
+	pausa->botao_resumir.som_sobre = sons->botao_sobre;
+	pausa->botao_resumir.som_pressionar = sons->botao_selecionar;
 
 	pausa->botao_reiniciar.sprite_padrao = sprites->pausa_botao_reiniciar_padrao;
 	pausa->botao_reiniciar.sprite_sobre = sprites->pausa_botao_reiniciar_sobre;
 	pausa->botao_reiniciar.sprite_pressionado = sprites->pausa_botao_reiniciar_padrao;
 	pausa->botao_reiniciar.sprite_desabilitado = sprites->pausa_botao_reiniciar_padrao;
 
-	pausa->botao_reiniciar.som_sobre = sons->menu_sobre;
-	pausa->botao_reiniciar.som_pressionar = sons->menu_selecionar;
+	pausa->botao_reiniciar.som_sobre = sons->botao_sobre;
+	pausa->botao_reiniciar.som_pressionar = sons->botao_selecionar;
 
 	pausa->botao_abandonar.sprite_padrao = sprites->pausa_botao_abandonar_padrao;
 	pausa->botao_abandonar.sprite_sobre = sprites->pausa_botao_abandonar_sobre;
 	pausa->botao_abandonar.sprite_pressionado = sprites->pausa_botao_abandonar_padrao;
 	pausa->botao_abandonar.sprite_desabilitado = sprites->pausa_botao_abandonar_padrao;
 
-	pausa->botao_abandonar.som_sobre = sons->menu_sobre;
-	pausa->botao_abandonar.som_pressionar = sons->menu_selecionar;
+	pausa->botao_abandonar.som_sobre = sons->botao_sobre;
+	pausa->botao_abandonar.som_pressionar = sons->botao_selecionar;
 
 	pausa->botao_sair_e_salvar.sprite_padrao = sprites->pausa_botao_sair_e_salvar_padrao;
 	pausa->botao_sair_e_salvar.sprite_sobre = sprites->pausa_botao_sair_e_salvar_sobre;
 	pausa->botao_sair_e_salvar.sprite_pressionado = sprites->pausa_botao_sair_e_salvar_padrao;
 	pausa->botao_sair_e_salvar.sprite_desabilitado = sprites->pausa_botao_sair_e_salvar_padrao;
 
-	pausa->botao_sair_e_salvar.som_sobre = sons->menu_sobre;
-	pausa->botao_sair_e_salvar.som_pressionar = sons->menu_selecionar;
+	pausa->botao_sair_e_salvar.som_sobre = sons->botao_sobre;
+	pausa->botao_sair_e_salvar.som_pressionar = sons->botao_selecionar;
 }
 
 void inicializar_game_over(struct GameOver *game_over, struct Sprites *sprites, struct Sons *sons)
@@ -2322,14 +2345,16 @@ void inicializar_game_over(struct GameOver *game_over, struct Sprites *sprites, 
 	game_over->botao_sair.sprite_pressionado = sprites->game_over_botao_sair_padrao;
 	game_over->botao_sair.sprite_desabilitado = sprites->game_over_botao_sair_padrao;
 
-	game_over->botao_sair.som_sobre = sons->menu_sobre;
+	game_over->botao_sair.som_sobre = sons->botao_sobre;
+	game_over->botao_sair.som_pressionar = sons->botao_selecionar;
 
 	game_over->botao_jogar_novamente.sprite_padrao = sprites->game_over_botao_jogar_novamente_padrao;
 	game_over->botao_jogar_novamente.sprite_sobre = sprites->game_over_botao_jogar_novamente_sobre;
 	game_over->botao_jogar_novamente.sprite_pressionado = sprites->game_over_botao_jogar_novamente_padrao;
 	game_over->botao_jogar_novamente.sprite_desabilitado = sprites->game_over_botao_jogar_novamente_padrao;
 
-	game_over->botao_jogar_novamente.som_sobre = sons->menu_sobre;
+	game_over->botao_jogar_novamente.som_sobre = sons->botao_sobre;
+	game_over->botao_jogar_novamente.som_pressionar = sons->botao_selecionar;
 }
 
 void inicializar_jogo(struct Jogo *jogo, struct Sprites *sprites, struct Sons *sons)
@@ -2344,7 +2369,7 @@ void inicializar_jogo(struct Jogo *jogo, struct Sprites *sprites, struct Sons *s
 	jogo->slot_selecionado = 1;
 
 	inicializar_quadro(&jogo->quadro);
-	inicializar_slots(jogo->slots, sprites);
+	inicializar_slots(jogo->slots, sprites, sons);
 	inicializar_habilidades(jogo, sprites, sons);
 	inicializar_pausa(&jogo->pausa, sprites, sons);
 	inicializar_game_over(&jogo->game_over, sprites, sons);
@@ -2850,35 +2875,35 @@ void inicializar_inicio(struct Inicio *inicio, struct Sprites *sprites, struct S
 	inicio->botao_continuar_jogo.sprite_pressionado = sprites->inicio_botao_continuar_jogo_padrao;
 	inicio->botao_continuar_jogo.sprite_desabilitado = sprites->inicio_botao_continuar_jogo_desabilitado;
 
-	inicio->botao_continuar_jogo.som_pressionar = sons->menu_selecionar;
+	inicio->botao_continuar_jogo.som_pressionar = sons->botao_selecionar;
 
 	inicio->botao_novo_jogo.sprite_padrao = sprites->inicio_botao_novo_jogo_padrao;
 	inicio->botao_novo_jogo.sprite_sobre = sprites->inicio_botao_novo_jogo_padrao;
 	inicio->botao_novo_jogo.sprite_pressionado = sprites->inicio_botao_novo_jogo_padrao;
 	inicio->botao_novo_jogo.sprite_desabilitado = sprites->inicio_botao_novo_jogo_padrao;
 
-	inicio->botao_novo_jogo.som_pressionar = sons->menu_selecionar;
+	inicio->botao_novo_jogo.som_pressionar = sons->botao_selecionar;
 
 	inicio->botao_sair.sprite_padrao = sprites->inicio_botao_sair_padrao;
 	inicio->botao_sair.sprite_sobre = sprites->inicio_botao_sair_padrao;
 	inicio->botao_sair.sprite_pressionado = sprites->inicio_botao_sair_padrao;
 	inicio->botao_sair.sprite_desabilitado = sprites->inicio_botao_sair_padrao;
 
-	inicio->botao_sair.som_pressionar = sons->menu_selecionar;
+	inicio->botao_sair.som_pressionar = sons->botao_selecionar;
 
 	inicio->botao_placar.sprite_padrao = sprites->inicio_botao_placar_padrao;
 	inicio->botao_placar.sprite_sobre = sprites->inicio_botao_placar_sobre;
 	inicio->botao_placar.sprite_pressionado = sprites->inicio_botao_placar_padrao;
 	inicio->botao_placar.sprite_desabilitado = sprites->inicio_botao_placar_padrao;
 
-	inicio->botao_placar.som_pressionar = sons->menu_selecionar;
+	inicio->botao_placar.som_pressionar = sons->botao_selecionar;
 
 	inicio->botao_ajuda.sprite_padrao = sprites->inicio_botao_ajuda_padrao;
 	inicio->botao_ajuda.sprite_sobre = sprites->inicio_botao_ajuda_sobre;
 	inicio->botao_ajuda.sprite_pressionado = sprites->inicio_botao_ajuda_padrao;
 	inicio->botao_ajuda.sprite_desabilitado = sprites->inicio_botao_ajuda_padrao;
 
-	inicio->botao_ajuda.som_pressionar = sons->menu_selecionar;
+	inicio->botao_ajuda.som_pressionar = sons->botao_selecionar;
 }
 
 void posicionar_inicio(struct Inicio *inicio, struct Tela *tela)
@@ -2986,7 +3011,7 @@ void cena_inicio(struct Tela *tela, struct Sistema *sistema, ALLEGRO_EVENT *even
 	}
 }
 
-void inicializar_placar(struct Placar *placar, struct Sprites *sprites)
+void inicializar_placar(struct Placar *placar, struct Sprites *sprites, struct Sons *sons)
 {
 	inicializar_botao(&placar->botao_voltar, BOTAO_VOLTAR_L, BOTAO_VOLTAR_H);
 
@@ -2994,6 +3019,8 @@ void inicializar_placar(struct Placar *placar, struct Sprites *sprites)
 	placar->botao_voltar.sprite_sobre = sprites->botao_voltar_padrao;
 	placar->botao_voltar.sprite_pressionado = sprites->botao_voltar_padrao;
 	placar->botao_voltar.sprite_desabilitado = sprites->botao_voltar_padrao;
+
+	placar->botao_voltar.som_pressionar = sons->botao_selecionar;
 }
 
 void posicionar_placar(struct Placar *placar, struct Tela *tela)
@@ -3153,7 +3180,7 @@ int main()
 
 	inicializar_recordes(sistema.recordes);
 	inicializar_inicio(&sistema.inicio, &tela.sprites, &tela.sons);
-	inicializar_placar(&sistema.placar, &tela.sprites);
+	inicializar_placar(&sistema.placar, &tela.sprites, &tela.sons);
 	inicializar_jogo(&sistema.jogo, &tela.sprites, &tela.sons);
 
 	transicionar_para_cena(&sistema, CENA_INICIO);
