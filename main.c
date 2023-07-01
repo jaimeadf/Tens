@@ -1565,11 +1565,18 @@ void gerar_slot(struct Slot *slot)
 	slot->peca = gerar_peca(slot->peca.x, slot->peca.y);
 }
 
-void pegar_slot(struct Slot *slot, int x, int y)
+bool pegar_slot(struct Slot *slot, int x, int y)
 {
+	if (!slot->ocupado)
+	{
+		return false;
+	}
+
 	slot->arrastando = true;
 	slot->arraste_x = slot->peca.x - x;
 	slot->arraste_y = slot->peca.y - y;
+
+	return true;
 }
 
 void arrastar_slot(struct Slot *slot, int x, int y)
@@ -2664,8 +2671,10 @@ void controlar_jogo_rodando(struct Tela *tela, struct Sistema *sistema, ALLEGRO_
 				{
 					if (colisao_slot(&sistema->jogo.slots[i], mouse_x, mouse_y))
 					{
-						sistema->jogo.slot_selecionado = i;
-						pegar_slot(&sistema->jogo.slots[i], mouse_x, mouse_y);
+						if (pegar_slot(&sistema->jogo.slots[i], mouse_x, mouse_y))
+						{
+							sistema->jogo.slot_selecionado = i;
+						}
 					}
 				}
 			}
