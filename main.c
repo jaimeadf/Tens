@@ -662,10 +662,18 @@ void carregar_sons(struct Sons *sons)
 	verificar_init(sons->menu_selecionar, "select.wav");
 }
 
-int aleatorio(int minimo, int maximo)
+int inteiro_aleatorio(int minimo, int maximo)
 {
 	int intervalo = maximo - minimo;
 	return rand() % intervalo + minimo;
+}
+
+double fracao_aleatoria(double minimo, double maximo)
+{
+	double intervalo = maximo - minimo;
+	double fracao = (double)rand() / RAND_MAX;
+
+	return fracao * intervalo + minimo;
 }
 
 int centro(int referencia, int maior, int menor)
@@ -1024,6 +1032,8 @@ void zerar_dado(struct Quadro *quadro, int linha, int coluna)
 
 		quadro->dados[linha][coluna].valor = DADO_VAZIO;
 	}
+
+	quadro->dados[linha][coluna].animacao = ANIMACAO_PARADO;
 }
 
 void preencher_dado(struct Quadro *quadro, int linha, int coluna, int cor, int valor)
@@ -1394,22 +1404,22 @@ struct Peca gerar_peca(int x, int y)
 	peca.x = x;
 	peca.y = y;
 
-	peca.cor = aleatorio(0, CORES_NUM);
-	peca.linhas = aleatorio(1, PECA_TAM + 1);
-	peca.colunas = aleatorio(1, PECA_TAM + 1);
+	peca.cor = inteiro_aleatorio(0, CORES_NUM);
+	peca.linhas = inteiro_aleatorio(1, PECA_TAM + 1);
+	peca.colunas = inteiro_aleatorio(1, PECA_TAM + 1);
 
 	for (int i = 0; i < PECA_TAM; i++)
 	{
 		for (int j = 0; j < PECA_TAM; j++)
 		{
-			peca.dados[i][j] = aleatorio(0, DADOS_NUM);
+			peca.dados[i][j] = inteiro_aleatorio(0, DADOS_NUM);
 		}
 	}
 
 	if (peca.linhas == PECA_TAM && peca.colunas == PECA_TAM)
 	{
-		int i = aleatorio(0, PECA_TAM);
-		int j = aleatorio(0, PECA_TAM);
+		int i = inteiro_aleatorio(0, PECA_TAM);
+		int j = inteiro_aleatorio(0, PECA_TAM);
 
 		peca.dados[i][j] = DADO_VAZIO;
 	}
@@ -2076,15 +2086,15 @@ void usar_bomba(struct Jogo *jogo)
 {
 	if (usar_habilidade(&jogo->bomba))
 	{
-		int indice_a = aleatorio(0, QUADRO_TAM);
-		int direcao_a = aleatorio(0, DIRECOES_NUM);
+		int indice_a = inteiro_aleatorio(0, QUADRO_TAM);
+		int direcao_a = inteiro_aleatorio(0, DIRECOES_NUM);
 
 		int indice_b;
 		int direcao_b;
 
 		do {
-			indice_b = aleatorio(0, QUADRO_TAM);
-			direcao_b = aleatorio(0, DIRECOES_NUM);
+			indice_b = inteiro_aleatorio(0, QUADRO_TAM);
+			direcao_b = inteiro_aleatorio(0, DIRECOES_NUM);
 		} while (direcao_a == direcao_b && indice_a == indice_b);
 
 		explodir_quadro(&jogo->quadro, indice_a, direcao_a);
@@ -2449,7 +2459,7 @@ void atualizar_slots(struct Jogo *jogo)
 	}
 }
 
-void atualizar_quadro(struct Jogo *jogo)
+void atualizar_quadro(struct Jogo *jogo, struct Sons *sons)
 {
 	for (int i = 0; i < QUADRO_TAM; i++)
 	{
@@ -2459,19 +2469,31 @@ void atualizar_quadro(struct Jogo *jogo)
 
 			dado->ticks++;
 
-			if (verificar_explosao(dado))
+			if (dado->ticks > dado->atraso)
 			{
-				zerar_dado(&jogo->quadro, i, j);
+				int duracao = dado->ticks - dado->atraso;
 
-				dado->animacao = ANIMACAO_PARADO;
-			}
+				switch (dado->animacao)
+				{
+				case ANIMACAO_COLAPSO:
+					if (duracao == 1)
+					{
+						al_play_sample(sons->pop, 1.0, 0.0, fracao_aleatoria(0.7, 1.3), ALLEGRO_PLAYMODE_ONCE, NULL);
+					}
 
-			if (verificar_colapso(dado))
-			{
-				zerar_dado(&jogo->quadro, i, j);
-				pontuar_dado(jogo);
-
-				dado->animacao = ANIMACAO_PARADO;
+					if (duracao == COLAPSO_FRAMES_NUM * COLAPSO_FRAME_PERIODO)
+					{
+						zerar_dado(&jogo->quadro, i, j);
+						pontuar_dado(jogo);
+					}
+					break;	
+				case ANIMACAO_EXPLOSAO:
+					if (duracao == EXPLOSAO_FRAMES_NUM * EXPLOSAO_FRAME_PERIODO)
+					{
+						zerar_dado(&jogo->quadro, i, j);
+					}
+					break;
+				}
 			}
 		}
 	}
@@ -2545,7 +2567,7 @@ void controlar_jogo_rodando(struct Tela *tela, struct Sistema *sistema, ALLEGRO_
 	switch (evento->type)
 	{
 		case ALLEGRO_EVENT_TIMER:
-			atualizar_quadro(&sistema->jogo);
+			atualizar_quadro(&sistema->jogo, &tela->sons);
 			atualizar_slots(&sistema->jogo);
 			atualizar_habilidades(&sistema->jogo);
 
