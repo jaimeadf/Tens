@@ -351,8 +351,6 @@ struct Sprites {
 };
 
 struct Sons {
-	ALLEGRO_SAMPLE *elefante;
-
 	ALLEGRO_SAMPLE *pop;
 	ALLEGRO_SAMPLE *snap;
 	ALLEGRO_SAMPLE *pluck;
@@ -609,6 +607,13 @@ void carregar_fontes(struct Fontes *fontes)
 	verificar_init(fontes->smallestpixel7_10, "smallestpixel7 10");
 }
 
+void destruir_fontes(struct Fontes *fontes)
+{
+	al_destroy_font(fontes->fipps_12);
+	al_destroy_font(fontes->pixelmix_8);
+	al_destroy_font(fontes->smallestpixel7_10);
+}
+
 void carregar_sprites(struct Sprites *sprites)
 {
 	sprites->sheet = al_load_bitmap("assets/sprites/spritesheet.png");
@@ -721,11 +726,113 @@ void carregar_sprites(struct Sprites *sprites)
 	}
 }
 
+void destruir_sprites(struct Sprites *sprites)
+{
+	al_destroy_bitmap(sprites->decoracao_centro);
+	al_destroy_bitmap(sprites->decoracao_padrao);
+
+	al_destroy_bitmap(sprites->botao_voltar);
+
+	al_destroy_bitmap(sprites->inicio_titulo);
+
+	al_destroy_bitmap(sprites->inicio_botao_continuar_jogo_padrao);
+	al_destroy_bitmap(sprites->inicio_botao_continuar_jogo_desabilitado);
+
+	al_destroy_bitmap(sprites->inicio_botao_novo_jogo_padrao);
+	al_destroy_bitmap(sprites->inicio_botao_sair_padrao);
+
+	al_destroy_bitmap(sprites->inicio_botao_placar_padrao);
+	al_destroy_bitmap(sprites->inicio_botao_placar_sobre);
+
+	al_destroy_bitmap(sprites->inicio_botao_ajuda_padrao);
+	al_destroy_bitmap(sprites->inicio_botao_ajuda_sobre);
+
+	al_destroy_bitmap(sprites->placar_titulo);
+	al_destroy_bitmap(sprites->placar_relogio);
+
+	al_destroy_bitmap(sprites->ajuda_titulo);
+	al_destroy_bitmap(sprites->ajuda_seta_direita);
+	al_destroy_bitmap(sprites->ajuda_seta_esquerda);
+
+	al_destroy_bitmap(sprites->pausa_titulo);
+
+	al_destroy_bitmap(sprites->pausa_botao_resumir_padrao);
+	al_destroy_bitmap(sprites->pausa_botao_resumir_sobre);
+
+	al_destroy_bitmap(sprites->pausa_botao_reiniciar_padrao);
+	al_destroy_bitmap(sprites->pausa_botao_reiniciar_sobre);
+
+	al_destroy_bitmap(sprites->pausa_botao_abandonar_padrao);
+	al_destroy_bitmap(sprites->pausa_botao_abandonar_sobre);
+
+	al_destroy_bitmap(sprites->pausa_botao_sair_e_salvar_padrao);
+	al_destroy_bitmap(sprites->pausa_botao_sair_e_salvar_sobre);
+
+	al_destroy_bitmap(sprites->game_over_titulo);
+
+	al_destroy_bitmap(sprites->game_over_botao_sair_padrao);
+	al_destroy_bitmap(sprites->game_over_botao_sair_sobre);
+
+	al_destroy_bitmap(sprites->game_over_botao_jogar_novamente_padrao);
+	al_destroy_bitmap(sprites->game_over_botao_jogar_novamente_sobre);
+
+	al_destroy_bitmap(sprites->moldura);
+
+	al_destroy_bitmap(sprites->botao_pausar_padrao);
+	al_destroy_bitmap(sprites->botao_pausar_sobre);
+
+	al_destroy_bitmap(sprites->habilidade_desfazer_padrao);
+	al_destroy_bitmap(sprites->habilidade_desfazer_pressionado);
+	al_destroy_bitmap(sprites->habilidade_desfazer_desabilitado);
+
+	al_destroy_bitmap(sprites->habilidade_bomba_padrao);
+	al_destroy_bitmap(sprites->habilidade_bomba_pressionado);
+	al_destroy_bitmap(sprites->habilidade_bomba_desabilitado);
+
+	al_destroy_bitmap(sprites->habilidade_rotacao_padrao);
+	
+	al_destroy_bitmap(sprites->botao_rotacionar_padrao);
+	al_destroy_bitmap(sprites->botao_rotacionar_desabilitado);
+
+	al_destroy_bitmap(sprites->botao_rotacionar_ativo_padrao);
+	al_destroy_bitmap(sprites->botao_rotacionar_ativo_pressionado);
+
+	al_destroy_bitmap(sprites->fundo_progresso);
+
+	for (int i = 0; i < CORES_NUM; i++)
+	{
+		for (int j = 0; j < DADOS_NUM; j++)
+		{
+			al_destroy_bitmap(sprites->dados[i][j]);
+		}
+	}
+
+	for (int i = 0; i < BALOES_NUM; i++)
+	{
+		al_destroy_bitmap(sprites->baloes_horizontais[i]);
+	}
+
+	for (int j = 0; j < BALOES_NUM; j++)
+	{
+		al_destroy_bitmap(sprites->baloes_verticais[j]);
+	}
+
+	for (int i = 0; i < COLAPSO_FRAMES_NUM; i++)
+	{
+		al_destroy_bitmap(sprites->colapso_linha[i]);
+		al_destroy_bitmap(sprites->colapso_coluna[i]);
+	}
+
+	for (int i = 0; i < EXPLOSAO_FRAMES_NUM; i++)
+	{
+		al_destroy_bitmap(sprites->explosao[i]);
+	}
+
+	al_destroy_bitmap(sprites->sheet);
+}
+
 void carregar_sons(struct Sons *sons)
 {
-	sons->elefante = al_load_sample("assets/sounds/elephant.wav");
-	verificar_init(sons->elefante, "elephant.wav");
-
 	sons->pop = al_load_sample("assets/sounds/pop.wav");
 	verificar_init(sons->pop, "pop.wav");
 
@@ -743,6 +850,16 @@ void carregar_sons(struct Sons *sons)
 
 	sons->botao_bloqueado = al_load_sample("assets/sounds/blocked.wav");
 	verificar_init(sons->botao_sobre, "blocked.wav");
+}
+
+void destruir_sons(struct Sons *sons)
+{
+	al_destroy_sample(sons->pop);
+	al_destroy_sample(sons->snap);
+	al_destroy_sample(sons->impacto);
+	al_destroy_sample(sons->botao_sobre);
+	al_destroy_sample(sons->botao_selecionar);
+	al_destroy_sample(sons->botao_bloqueado);
 }
 
 int inteiro_aleatorio(int minimo, int maximo)
@@ -807,6 +924,12 @@ void criar_canvas(struct Tela *tela)
 	al_scale_transform(&transform, tela->escala, tela->escala);
 
 	al_use_transform(&transform);
+}
+
+void destruir_tela(struct Tela *tela)
+{
+	al_destroy_bitmap(tela->canvas);
+	al_destroy_display(tela->display);
 }
 
 void alternar_tela_cheia(struct Tela *tela)
@@ -944,7 +1067,7 @@ void desenhar_botao(struct Botao *botao)
 
 bool comparar_recorde(struct Recorde *recorde, int escore, int tempo)
 {
-	return recorde->vago || escore > recorde->escore || escore == recorde->escore && tempo < recorde->tempo;
+	return recorde->vago || escore > recorde->escore || (escore == recorde->escore && tempo < recorde->tempo);
 }
 
 void carregar_recordes(struct Recorde recordes[RECORDES_TAM])
@@ -2151,14 +2274,14 @@ void escrever_jogo(FILE *arquivo, struct Jogo *jogo)
 	fprintf(arquivo, "\n");
 
 	escrever_jogada(arquivo, &jogo->jogada);
-
-	fclose(arquivo);
 }
 
 bool ler_jogo(FILE *arquivo, struct Jogo *jogo)
 {
 	jogo->estado = ESTADO_RODANDO;
 	jogo->slot_selecionado = -1;
+
+	resetar_anuncios(jogo->anuncios);
 
 	if (fscanf(arquivo, "%d %d\n\n", &jogo->escore, &jogo->tempo) != 2)
 	{
@@ -2313,7 +2436,7 @@ void analisar_consequencias(struct Jogo *jogo)
 
 bool pode_usar_rotacao(struct Jogo *jogo, struct Slot *slot)
 {
-	return slot->rotacionando || slot->ocupado && pode_usar_habilidade(&jogo->rotacao) && pode_rotacionar_peca(&slot->peca);
+	return slot->rotacionando || (slot->ocupado && pode_usar_habilidade(&jogo->rotacao) && pode_rotacionar_peca(&slot->peca));
 }
 
 void usar_desfazer(struct Jogo *jogo)
@@ -2944,30 +3067,14 @@ void controlar_jogo_rodando(struct Tela *tela, struct Sistema *sistema, ALLEGRO_
 					sistema->jogo.slot_selecionado = -1;;
 				}
 			}
+			
 			break;
 		case ALLEGRO_EVENT_KEY_DOWN:
-			if (evento->keyboard.keycode == ALLEGRO_KEY_B)
-			{
-				pontuar_tabuleiro_concluido(&sistema->jogo);
-			}
-
-			if (sistema->jogo.slot_selecionado != -1)
-			{
-				if (evento->keyboard.keycode == ALLEGRO_KEY_SPACE)
-				{
-					gerar_slot(&sistema->jogo.slots[sistema->jogo.slot_selecionado]);
-				}
-
-				if (evento->keyboard.keycode == ALLEGRO_KEY_R)
-				{
-					rotacionar_slot(&sistema->jogo.slots[sistema->jogo.slot_selecionado]);
-				}
-			}
-
 			if (evento->keyboard.keycode == ALLEGRO_KEY_ESCAPE)
 			{
 				pausar_jogo(&sistema->jogo);
 			}
+
 			break;
 	}
 
@@ -3369,6 +3476,12 @@ void cena_placar(struct Tela *tela, struct Sistema *sistema, ALLEGRO_EVENT *even
 			}
 
 			break;
+		case ALLEGRO_EVENT_KEY_DOWN:
+			if (evento->keyboard.keycode == ALLEGRO_KEY_ESCAPE)
+			{
+				transicionar_para_cena(sistema, CENA_INICIO);
+			}
+			break;
 	}
 
 	if (sistema->redesenhar)
@@ -3488,6 +3601,9 @@ void cena_ajuda(struct Tela *tela, struct Sistema *sistema, ALLEGRO_EVENT *event
 				case ALLEGRO_KEY_LEFT:
 					voltar_pagina_ajuda(&sistema->ajuda);
 					break;
+				case ALLEGRO_KEY_ESCAPE:
+					transicionar_para_cena(sistema, CENA_INICIO);
+					break;
 			}
 			break;
 	}
@@ -3568,6 +3684,7 @@ int main()
 
 	ALLEGRO_EVENT_QUEUE *queue = al_create_event_queue();
 	verificar_init(queue, "queue");
+
 
 	carregar_fontes(&tela.fontes);
 	carregar_sprites(&tela.sprites);
@@ -3664,4 +3781,25 @@ int main()
 				break;
 		}
 	}
+
+	destruir_fontes(&tela.fontes);
+	destruir_sprites(&tela.sprites);
+	destruir_sons(&tela.sons);
+
+	al_destroy_event_queue(queue);
+	al_destroy_timer(timer);
+
+	al_destroy_bitmap(tela.canvas);
+	al_destroy_display(tela.display);
+
+	al_uninstall_keyboard();
+	al_uninstall_mouse();
+	al_uninstall_audio();
+
+	al_shutdown_primitives_addon();
+	al_shutdown_font_addon();
+	al_shutdown_ttf_addon();
+	al_shutdown_image_addon();
+
+	al_uninstall_system();
 }
