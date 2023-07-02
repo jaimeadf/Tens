@@ -2400,7 +2400,7 @@ void pontuar_tabuleiro_concluido(struct Jogo *jogo)
 
 void pontuar_multilinha(struct Jogo *jogo, int simultaneos)
 {
-	int pontos = PONTOS_MULTILINHA * (simultaneos - 1);
+	int pontos = PONTOS_MULTILINHA * simultaneos;
 
 	acumular_habilidade(&jogo->bomba, 1);
 	criar_anuncio(jogo->anuncios, PREMIO_MULTILINHA, pontos, 0);
