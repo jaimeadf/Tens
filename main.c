@@ -74,6 +74,9 @@
 #define LARGURA_ORIGINAL 320
 #define ALTURA_ORIGINAL 180
 
+#define ICONE_L 32
+#define ICONE_H 32
+
 #define DECORACAO_CENTRO_L 126
 #define DECORACAO_PADRAO_L 91
 #define DECORACAO_H 11
@@ -266,6 +269,8 @@ struct Fontes {
 
 struct Sprites {
 	ALLEGRO_BITMAP *sheet;
+
+	ALLEGRO_BITMAP *icone;
 
 	ALLEGRO_BITMAP *decoracao_centro;
 	ALLEGRO_BITMAP *decoracao_padrao;
@@ -619,6 +624,8 @@ void carregar_sprites(struct Sprites *sprites)
 	sprites->sheet = al_load_bitmap("assets/sprites/spritesheet.png");
 	verificar_init(sprites->sheet, "spritesheet.png");
 
+	sprites->icone = recortar_sprite(sprites, 300, 0, ICONE_L, ICONE_H);
+
 	sprites->decoracao_centro = recortar_sprite(sprites, 192, 155, DECORACAO_CENTRO_L, DECORACAO_H);
 	sprites->decoracao_padrao = recortar_sprite(sprites, 318, 155, DECORACAO_PADRAO_L, DECORACAO_H);
 
@@ -728,6 +735,8 @@ void carregar_sprites(struct Sprites *sprites)
 
 void destruir_sprites(struct Sprites *sprites)
 {
+	al_destroy_bitmap(sprites->icone);
+
 	al_destroy_bitmap(sprites->decoracao_centro);
 	al_destroy_bitmap(sprites->decoracao_padrao);
 
@@ -3706,7 +3715,6 @@ int main()
 	ALLEGRO_EVENT_QUEUE *queue = al_create_event_queue();
 	verificar_init(queue, "queue");
 
-
 	carregar_fontes(&tela.fontes);
 	carregar_sprites(&tela.sprites);
 	carregar_sons(&tela.sons);
@@ -3715,6 +3723,8 @@ int main()
 	al_register_event_source(queue, al_get_mouse_event_source());
 	al_register_event_source(queue, al_get_keyboard_event_source());
 	al_register_event_source(queue, al_get_timer_event_source(timer));
+
+	al_set_display_icon(tela.display, tela.sprites.icone);
 
 	ALLEGRO_EVENT evento;
 	bool redesenhar = false;
