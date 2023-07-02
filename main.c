@@ -3724,6 +3724,7 @@ int main()
 	al_register_event_source(queue, al_get_keyboard_event_source());
 	al_register_event_source(queue, al_get_timer_event_source(timer));
 
+	al_set_window_title(tela.display, "Tens");
 	al_set_display_icon(tela.display, tela.sprites.icone);
 
 	ALLEGRO_EVENT evento;
