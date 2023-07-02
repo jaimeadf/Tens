@@ -250,7 +250,7 @@ const char *PAGINAS_AJUDA[] = {
 	"Habilidades:\n"
 	"- rotacao: gire os dados de um cojunto duplo ou triplo\n"
 	"(cada 50 pontos).\n\n"
-	"- bomba: exploda 2 linhas ou colunas aleatoriamente\n"
+	"- bomba: exploda 2 linhas ou 2 colunas aleatoriamente\n"
 	"(cada 5 combinacoes).\n\n"
 	"- desfazer: reverta o seu ultimo movimento\n"
 	"(apos 5 tabuleiros concluidos).\n\n"
@@ -1405,6 +1405,22 @@ struct Arranjos formar_arranjos(struct Quadro *quadro)
 	return arranjos;
 }
 
+bool quadro_sendo_animado(struct Quadro *quadro)
+{
+	for (int i = 0; i < QUADRO_TAM; i++)
+	{
+		for (int j = 0; j < QUADRO_TAM; j++)
+		{
+			if (quadro->dados[i][j].animacao != ANIMACAO_PARADO)
+			{
+				return true;
+			}
+		}
+	}
+
+	return false;
+}
+
 bool quadro_limpo(struct Quadro *quadro)
 {
 	for (int i = 0; i < QUADRO_TAM; i++)
@@ -2506,6 +2522,11 @@ bool existe_espaco_disponivel_para_slot(struct Jogo *jogo, struct Slot *slot)
 
 bool verificar_fim_de_jogo(struct Jogo *jogo)
 {
+	if (quadro_sendo_animado(&jogo->quadro))
+	{
+		return false;
+	}
+
 	if (pode_usar_habilidade(&jogo->desfazer))
 	{
 		return false;
